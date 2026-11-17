@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* -------------------------------------------------------------------------
+   Woodin design tokens (source: Claude Design canvas)
+   ------------------------------------------------------------------------- */
+@theme {
+  --color-brown: #521b0a; /* primary, footer, active nav */
+  --color-ink: #1a120e; /* text */
+  --color-ivory: #f8f5ef; /* page background */
+  --color-sand: #efe8dc; /* alternate bands */
+  --color-line: #e3dacb; /* hairlines */
+  --color-line-strong: #d8cdbc; /* input borders, outline buttons */
+  --color-muted: #5f554c; /* secondary text */
+  --color-body: #3d332c; /* long-form copy */
+  --color-gold: #8a6115; /* gold eyebrow on light */
+  --color-gold-light: #e2c57a; /* gold eyebrow on dark */
+  --color-gold-btn: #d9a441; /* gold button */
+  --color-sky: #174a8b;
+  --color-espresso: #2a1e17; /* image placeholder bg */
+  --color-instock: #2e5e3a;
+  --color-instock-dot: #2e7d4f;
+  --color-lowstock: #8a3a12;
+  --color-momo: #ffcc00;
+
+  /* --font-display is the swap point: replace Bodoni Moda with the licensed
+     Le Jeune Deck by changing --font-bodoni in app/layout.tsx only. */
+  --font-display: var(--font-bodoni), "Bodoni Moda", Georgia, serif;
+  --font-text: var(--font-jost), Jost, system-ui, sans-serif;
+
+  --breakpoint-xs: 30rem;
+  --container-content: 1360px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-text);
+    -webkit-font-smoothing: antialiased;
+  }
+  button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold-btn);
+    outline-offset: 2px;
+  }
+}
+
+/* Uppercase tracked label used across the design (eyebrows, buttons, nav). */
+@utility label-caps {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Centered, gutter-padded content column (max 1360px). */
+@utility content-wrap {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-content);
+  padding-inline: 16px;
+  @media (min-width: 48rem) {
+    padding-inline: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
