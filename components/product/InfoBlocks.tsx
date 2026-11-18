@@ -1,4 +1,4 @@
-import { MAIN_LINKS } from "@/lib/links";
+import Link from "next/link";
 
 const ICON = "mt-0.5 shrink-0 text-brown";
 
@@ -21,7 +21,7 @@ export function InfoBlocks() {
         </svg>
         <span>
           <span className="font-medium">Click &amp; collect</span> — free, in stock at [STORE NAME].{" "}
-          <a href={MAIN_LINKS.stores}>Other stores</a>
+          <Link href="/stores">Find a store</Link>
         </span>
       </li>
       <li className="flex gap-3.5 px-[18px] py-4">

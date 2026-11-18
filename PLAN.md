@@ -243,3 +243,11 @@ Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `s
 
 - **No accessories** in the eshop: removed from `SHOP_SECTIONS`, the shop sidebar, footer, default catalogue and cart suggestions. Shop sections are Men, Women, Fabrics.
 - **"The World of Woodin" carousel removed** from Home. Home order: banner → New in → Featured looks → Women's wear → Shop the look → Fabrics → services → #WearWoodin.
+
+## 14. Store locator lives in the eshop
+
+- **`/stores`** (new, 6th page). The main site's locator is being removed, so the header "Find a store" (top-left, as in the design) and the "Stores" nav item both go here, and so do the footer and product-page links.
+- **Data: `STORES_JSON` env var**, a one-line JSON array validated by zod in `lib/stores.ts` (name, address, region, phone, gps, lat+lng, hours rows, services, directionsUrl). Bad entries are skipped with a server log. Unset = two placeholder stores. The same list fills the checkout click-and-collect dropdown.
+- **Map:** Leaflet + OpenStreetMap tiles (no API key), W-mark pins, only for stores that have lat+lng; loaded client-side and code-split to this page. One-finger map drag is off on touch screens so it can't trap page scroll.
+- **Few stores:** search and region chips appear only when there are more than 3 stores. "Use my location" (browser geolocation, sorted by distance, nothing sent anywhere) appears when any store has coordinates.
+- Deep link: `/stores?store=<id>` preselects a store.

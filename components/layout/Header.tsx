@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BagLink } from "@/components/cart/BagLink";
-import { SearchIcon } from "@/components/ui/icons";
+import { PinIcon, SearchIcon } from "@/components/ui/icons";
 import { freeDeliveryLabel } from "@/lib/config";
 import { LOGO } from "@/lib/images";
 import { NavLinks } from "./NavLinks";
@@ -27,7 +27,14 @@ export function Header({ variant = "solid" }: HeaderProps) {
 
       <div className={`border-b ${overlay ? "border-white/30" : "border-line"}`}>
         <div className="content-wrap grid grid-cols-[1fr_auto_1fr] items-center gap-4 pb-1 pt-3 md:pt-4">
-          <div aria-hidden="true" />
+          <div className="flex items-center">
+            <Link href="/stores" className="hidden items-center px-2 py-3 text-xs uppercase tracking-[0.14em] md:flex">
+              Find a store
+            </Link>
+            <Link href="/stores" aria-label="Find a store" className={`${iconBtn} md:hidden`}>
+              <PinIcon />
+            </Link>
+          </div>
 
           <Link href="/" aria-label="Woodin, Le créateur: shop home" className="block leading-none">
             <Image

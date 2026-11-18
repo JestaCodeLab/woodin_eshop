@@ -8,7 +8,6 @@ export const mainUrl = (path: string) => `${MAIN_SITE}${path}`;
 
 export const MAIN_LINKS = {
   home: mainUrl("/"),
-  stores: mainUrl("/store-locator/"),
 } as const;
 
 export const isExternal = (href: string) => /^https?:\/\//.test(href);
