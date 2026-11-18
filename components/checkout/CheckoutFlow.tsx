@@ -2,21 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
 import { IMG, LOGO } from "@/lib/images";
 import { MAIN_LINKS } from "@/lib/links";
-import { METHODS, ZONES, type MethodId, type ZoneId } from "@/lib/checkout-config";
+import { METHODS, type MethodId, type ZoneId } from "@/lib/checkout-config";
 
 /**
- * Checkout, demo mode. Nothing here is sent anywhere or stored: the form lives in component
- * state and disappears on reload. Payment is simulated in the style of Paystack test mode.
- *
- * Going live (later): replace `startPayment` with a redirect to the WooCommerce checkout
- * page where the Paystack plugin runs, or to a Paystack inline transaction.
+ * Checkout. Two modes, chosen by the server (`payments`):
+ *  - payments ON: POST /api/checkout/start creates a pending WooCommerce order and a Paystack
+ *    transaction (amounts are decided on the server, never here), then the Paystack popup opens on
+ *    this page. The customer never leaves the eshop. We poll /api/checkout/confirm and move to
+ *    /checkout/confirmation when the payment is verified.
+ *  - payments OFF: the old simulated flow (no money, no orders, nothing stored).
  */
 
 type Step = "form" | "paying" | "done";
@@ -45,7 +46,54 @@ export interface PickupStore {
   address: string;
 }
 
-export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) {
+export interface DeliveryChoice {
+  id: ZoneId;
+  name: string;
+  short: string;
+  eta: string;
+  fee: number | null;
+}
+
+interface PaystackPopup {
+  resumeTransaction: (accessCode: string, callbacks?: { onSuccess?: () => void; onCancel?: () => void; onError?: () => void }) => void;
+}
+declare global {
+  interface Window {
+    PaystackPop?: new () => PaystackPopup;
+  }
+}
+
+interface Attempt {
+  reference: string;
+  accessCode: string;
+  authorizationUrl: string;
+}
+
+const INLINE_SRC = "https://js.paystack.co/v2/inline.js";
+
+function loadInlineScript(): Promise<void> {
+  if (window.PaystackPop) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${INLINE_SRC}"]`);
+    const el = existing ?? Object.assign(document.createElement("script"), { src: INLINE_SRC, async: true });
+    el.addEventListener("load", () => resolve(), { once: true });
+    el.addEventListener("error", () => reject(new Error("Paystack script failed to load")), { once: true });
+    if (!existing) document.head.appendChild(el);
+  });
+}
+
+export function CheckoutFlow({
+  pickupStores,
+  payments,
+  deliveryOptions,
+  freeDeliveryThreshold,
+}: {
+  pickupStores: PickupStore[];
+  payments: boolean;
+  deliveryOptions: DeliveryChoice[];
+  freeDeliveryThreshold: number | null;
+}) {
+  const router = useRouter();
   const { cart, status, clear } = useCart();
   const search = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
@@ -58,14 +106,20 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
   const [errors, setErrors] = useState<Errors>({});
   const [phone, setPhone] = useState("");
   const [receipt, setReceipt] = useState<{ total: string; zone: string; method: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState<Attempt | null>(null);
 
-  const zone = ZONES.find((z) => z.id === zoneId)!;
+  const zone = deliveryOptions.find((z) => z.id === zoneId) ?? deliveryOptions[0];
   const method = METHODS.find((m) => m.id === methodId)!;
   const currency = cart?.currency ?? "GHS";
   const money = (n: number | null) => (n === null ? "GH₵ [PRICE]" : formatMoney(n, currency));
   const subtotal = cart?.subtotal ?? 0;
-  const total = subtotal + (zone.fee ?? 0);
-  const feeLabel = zone.fee === null ? "GH₵ [FEE]" : zone.fee === 0 ? "Free" : money(zone.fee);
+  // Same rule the server applies: "Free Accra delivery over GH₵ X".
+  const feeFor = (z: DeliveryChoice) => (z.id === "accra" && freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold ? 0 : z.fee);
+  const fee = feeFor(zone);
+  const total = subtotal + (fee ?? 0);
+  const feeLabel = fee === null ? "GH₵ [FEE]" : fee === 0 ? "Free" : money(fee);
   const isCard = methodId === "card";
 
   const steps = ["Bag", "Details", "Payment", "Confirmation"];
@@ -88,6 +142,76 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
     await clear();
   }
 
+  async function openPaystack(a: Attempt) {
+    setPayError(null);
+    try {
+      await loadInlineScript();
+      if (!window.PaystackPop) throw new Error("no popup");
+      new window.PaystackPop().resumeTransaction(a.accessCode, {
+        onSuccess: () => router.push(`/checkout/confirmation?reference=${a.reference}`),
+        onCancel: () => undefined, // stays on the "complete your payment" screen; polling continues
+      });
+    } catch {
+      // Popup unavailable (blocked script, ad blocker): use Paystack's hosted page, which returns to /checkout/confirmation.
+      window.location.assign(a.authorizationUrl);
+    }
+  }
+
+  async function startPayment(data: FormData) {
+    setSubmitting(true);
+    setPayError(null);
+    const get = (k: string) => String(data.get(k) ?? "").trim();
+    try {
+      const res = await fetch("/api/checkout/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact: { name: get("name"), phone: get("phone"), email: get("email") },
+          delivery: { zone: zoneId, address: get("address") || undefined, area: get("area") || undefined, storeId: get("store") || undefined },
+        }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setPayError(body?.message ?? "We could not start your payment. Please try again.");
+        return;
+      }
+      const a: Attempt = { reference: body.reference, accessCode: body.accessCode, authorizationUrl: body.authorizationUrl };
+      setAttempt(a);
+      setStep("paying");
+      void openPaystack(a);
+    } catch {
+      setPayError("We could not reach the shop. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // While the payment window is open (or a MoMo prompt is waiting on the phone), watch for the result.
+  useEffect(() => {
+    if (!payments || step !== "paying" || !attempt) return;
+    let stop = false;
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/checkout/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference: attempt.reference }),
+        });
+        const body = await res.json().catch(() => null);
+        if (stop) return;
+        if (body?.status === "paid" || body?.status === "review") router.push(`/checkout/confirmation?reference=${attempt.reference}`);
+        else if (body?.status === "failed") setPayError("That payment did not go through. You have not been charged. Please try again.");
+      } catch {
+        /* transient: try again on the next tick */
+      }
+    };
+    const id = setInterval(tick, 4000);
+    return () => {
+      stop = true;
+      clearInterval(id);
+    };
+  }, [payments, step, attempt, router]);
+
   function onSubmit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const data = new FormData(ev.currentTarget);
@@ -99,7 +223,8 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
       return;
     }
     setPhone(String(data.get("phone")));
-    if (isCard) void finish();
+    if (payments) void startPayment(data);
+    else if (isCard) void finish();
     else setStep("paying");
   }
 
@@ -141,6 +266,39 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
         </>
       );
     }
+  }
+
+  if (step === "paying" && payments && attempt) {
+    return (
+      <>
+        {stepNav}
+        <section className="mx-auto flex max-w-[640px] flex-col items-center gap-[22px] px-4 pb-28 pt-20 text-center">
+          <span className="flex h-[110px] w-[110px] items-center justify-center rounded-full border border-brown text-brown">
+            <svg aria-hidden="true" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+              <rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18M7 15h3" />
+            </svg>
+          </span>
+          <h1 className="m-0 font-display text-[clamp(34px,6vw,52px)] font-normal leading-none">Complete your payment</h1>
+          <p className="m-0 text-[17px] font-light leading-[1.7] text-body" role="status">
+            {payError ?? "Pay in the secure Paystack window. For Mobile Money, approve the prompt on your phone. This page updates by itself."}
+          </p>
+          <Button onClick={() => void openPaystack(attempt)} variant="primary" size="lg" className="px-[34px]">
+            Open the payment window
+          </Button>
+          <button
+            type="button"
+            onClick={() => {
+              setAttempt(null);
+              setPayError(null);
+              setStep("form");
+            }}
+            className="h-11 border-0 bg-transparent px-3 text-sm text-ink underline"
+          >
+            Change my details
+          </button>
+        </section>
+      </>
+    );
   }
 
   if (step === "paying") {
@@ -231,7 +389,7 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
           <fieldset className="m-0 flex min-w-0 flex-col gap-3.5 border-0 p-0">
             <legend className="mb-4 p-0 font-display text-[30px]">2. Delivery</legend>
             <div role="radiogroup" aria-label="Delivery option" className="grid gap-2.5 sm:grid-cols-3">
-              {ZONES.map((z) => (
+              {deliveryOptions.map((z) => (
                 <button
                   key={z.id}
                   type="button"
@@ -242,7 +400,7 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
                 >
                   <span className="font-display text-xl">{z.name}</span>
                   <span className="text-[13px] text-muted">{z.eta}</span>
-                  <span className="mt-1.5 text-[15px]">{z.fee === null ? "GH₵ [FEE]" : z.fee === 0 ? "Free" : money(z.fee)}</span>
+                  <span className="mt-1.5 text-[15px]">{feeFor(z) === null ? "GH₵ [FEE]" : feeFor(z) === 0 ? "Free" : money(feeFor(z))}</span>
                 </button>
               ))}
             </div>
@@ -268,32 +426,50 @@ export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) 
 
           <fieldset className="m-0 flex min-w-0 flex-col gap-3.5 border-0 p-0">
             <legend className="mb-4 p-0 font-display text-[30px]">3. Payment</legend>
+            {payments ? (
+              <p className="m-0 border border-line bg-white p-4 text-sm font-light leading-[1.6] text-body">
+                You will choose <strong className="font-medium">MTN MoMo, Telecel Cash, AT Money or card</strong> in the secure
+                Paystack window on this page. For Mobile Money, approve the prompt on your phone.
+              </p>
+            ) : (
+              <>
             <div role="radiogroup" aria-label="Payment method" className="grid gap-2.5 sm:grid-cols-2">
-              {METHODS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={methodId === m.id}
-                  onClick={() => setMethodId(m.id)}
-                  className={`flex min-h-[60px] items-center gap-3 bg-white px-[18px] text-[15px] ${methodId === m.id ? radioOn : radioOff}`}
-                >
-                  <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: m.dot }} />
-                  <span className="flex-1 text-left">{m.name}</span>
-                  {m.note ? <span className="text-[11px] uppercase tracking-[0.12em] text-muted">{m.note}</span> : null}
-                </button>
-              ))}
-            </div>
-            <p className="m-0 text-sm font-light leading-[1.6] text-body">
-              {isCard
-                ? "Enter your card details in the secure Paystack window. 3-D Secure supported."
-                : "You will get a prompt on the phone number above. Approve it with your Mobile Money PIN."}
-            </p>
-            <button type="submit" className="label-caps h-16 border-0 bg-brown tracking-[0.2em] text-ivory transition-colors hover:bg-[#3a1307]">
-              Pay {money(total)} with {method.short}
+                {METHODS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={methodId === m.id}
+                    onClick={() => setMethodId(m.id)}
+                    className={`flex min-h-[60px] items-center gap-3 bg-white px-[18px] text-[15px] ${methodId === m.id ? radioOn : radioOff}`}
+                  >
+                    <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: m.dot }} />
+                    <span className="flex-1 text-left">{m.name}</span>
+                    {m.note ? <span className="text-[11px] uppercase tracking-[0.12em] text-muted">{m.note}</span> : null}
+                  </button>
+                ))}
+              </div>
+              <p className="m-0 text-sm font-light leading-[1.6] text-body">
+                {isCard
+                  ? "Enter your card details in the secure Paystack window. 3-D Secure supported."
+                  : "You will get a prompt on the phone number above. Approve it with your Mobile Money PIN."}
+              </p>
+              </>
+            )}
+            {payError ? (
+              <p role="alert" className="m-0 border border-lowstock bg-white px-4 py-3 text-sm text-lowstock">
+                {payError}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="label-caps h-16 border-0 bg-brown tracking-[0.2em] text-ivory transition-colors hover:bg-[#3a1307] disabled:bg-[#a99e90]"
+            >
+              {submitting ? "Preparing your order…" : payments ? `Pay ${money(total)}` : `Pay ${money(total)} with ${method.short}`}
             </button>
             <p className="m-0 text-center text-xs text-muted">
-              Secured by Paystack · This demo runs in test mode{zone.fee === null ? " · Delivery fee to be confirmed" : ""}
+              Secured by Paystack{payments ? "" : " · This demo runs in test mode"}{fee === null ? " · Delivery fee to be confirmed" : ""}
             </p>
           </fieldset>
         </form>

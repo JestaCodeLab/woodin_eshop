@@ -16,6 +16,8 @@ export interface CartItem {
   unitPrice: number | null;
   lineTotal: number | null;
   inStock: boolean;
+  /** True when the price comes from the demo layer (data/product-overrides.ts), not WooCommerce. */
+  demoPrice: boolean;
 }
 
 export interface CartCoupon {

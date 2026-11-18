@@ -261,3 +261,13 @@ Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `s
 - **`sitemap.xml`:** static pages + shop sections + every product (442), cached 5 min; falls back to the static pages if the store is unreachable.
 - **Structured data (JSON-LD):** Organization + WebSite (with site search) on every page; Product + BreadcrumbList on products; ClothingStore per real store on `/stores`. **Product `offers` are deliberately omitted while prices come from the demo layer** (`Price.isDemo`); they appear automatically once WooCommerce has real prices.
 - **Env:** `NEXT_PUBLIC_SITE_URL` (canonical origin; falls back to Vercel's production URL), optional `GOOGLE_SITE_VERIFICATION`.
+
+## 16. Paystack checkout (customers stay in the eshop)
+
+Flow: checkout form -> `POST /api/checkout/start` (server recomputes the total from authoritative prices + the delivery fee, creates a **pending WooCommerce order** via wc/v3, then a **Paystack transaction** for that exact amount in GHS pesewas) -> Paystack popup on the checkout page (hosted-page redirect as fallback) -> `/checkout/confirmation?reference=…` polls `POST /api/checkout/confirm`, which **verifies with Paystack** and marks the order `processing`/paid. `POST /api/paystack/webhook` (HMAC-SHA512 signature, then re-verify) does the same server-side. Idempotent, amounts never come from the browser, mismatches go `on-hold` with an order note.
+
+- **Config:** `PAYSTACK_SECRET_KEY` (sk_test_… for testing; sk_live_… is ignored unless `PAYSTACK_ALLOW_LIVE=true`), `WC_ORDERS_URL` + REST key/secret (`WC_CONSUMER_*` or `WOOCOMMERCE_CONSUMER_*`), `WC_ORDERS_ALLOW_LIVE=true` to write orders to woodinfashion.com. Payments are off (simulated checkout) unless Paystack AND the orders site are configured.
+- **Delivery fees** are read from WooCommerce shipping zones named "Accra & Tema" / "Other regions" (Flat rate) and a Local pickup method; missing ones fall back to flagged demo fees (test mode only). "Free Accra delivery over `FREE_DELIVERY_THRESHOLD`" applies server-side too.
+- **Safety:** demo prices are refused with a live Paystack key; orders carry `woodin_demo_prices` meta when demo-priced; one pending order per browser (the previous unpaid one is cancelled); same-origin JSON checks on all browser POSTs.
+- **Live-site quirk:** the live host answers `/wp-json/wc/v3/*` with "no route", so the orders client uses `/?rest_route=/wc/v3/*`.
+- **Not verified yet:** a real payment in the Paystack popup (card and Mobile Money) and the live webhook.

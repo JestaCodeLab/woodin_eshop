@@ -72,6 +72,7 @@ async function build(lines: Stored): Promise<Cart> {
       unitPrice: unit,
       lineTotal: unit === null ? null : unit * l.qty,
       inStock: p.inStock,
+      demoPrice: p.price.isDemo,
     });
   });
 

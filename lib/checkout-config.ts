@@ -1,5 +1,8 @@
 export type ZoneId = "accra" | "nation" | "store";
 
+/** Label used for the WooCommerce shipping line of a store-pickup order. */
+export const PICKUP_ZONE_LABEL = "Click & collect";
+
 /** Delivery fees are unconfirmed ([FEE]); null renders the placeholder and is left out of the total. */
 export const ZONES: { id: ZoneId; name: string; short: string; eta: string; fee: number | null }[] = [
   { id: "accra", name: "Accra & Tema", short: "Accra", eta: "Arrives by [DAY]", fee: null },
