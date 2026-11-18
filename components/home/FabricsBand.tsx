@@ -2,15 +2,16 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { CoverImage } from "@/components/ui/CoverImage";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { shopHref } from "@/lib/links";
 
-interface Print {
+export interface FabricTile {
   name: string;
-  img: string;
-  pos: string;
-  zoom: number;
+  href: string;
+  image: string;
 }
 
-export function FabricsBand({ prints }: { prints: Print[] }) {
+/** Brown band introducing fabrics: three real fabric products from the catalogue. */
+export function FabricsBand({ fabrics }: { fabrics: FabricTile[] }) {
   return (
     <section className="bg-brown text-ivory">
       <div className="content-wrap flex flex-wrap items-center gap-10 py-16 md:gap-14 md:py-[100px]">
@@ -23,25 +24,19 @@ export function FabricsBand({ prints }: { prints: Print[] }) {
             Shop Woodin prints by the piece and have them tailored your way. Every print online, with stock
             checked at your nearest store.
           </p>
-          <Button href="/fabrics" variant="outline-light" className="self-start">
+          <Button href={shopHref("fabrics")} variant="outline-light" className="self-start">
             Shop fabrics
           </Button>
         </div>
 
         <ul className="m-0 grid min-w-0 flex-[1.4_1_520px] list-none grid-cols-3 gap-3 p-0">
-          {prints.map((p) => (
-            <li key={p.name}>
-              <Link href="/fabrics" className="flex flex-col gap-2.5 text-ivory no-underline">
+          {fabrics.map((f) => (
+            <li key={f.href}>
+              <Link href={f.href} className="flex flex-col gap-2.5 text-ivory no-underline">
                 <span className="relative block h-[200px] overflow-hidden md:h-[300px]">
-                  <CoverImage
-                    src={p.img}
-                    alt={`${p.name} print close-up`}
-                    pos={p.pos}
-                    zoom={p.zoom}
-                    sizes="(min-width: 1024px) 20vw, 30vw"
-                  />
+                  <CoverImage src={f.image} alt={`${f.name} print`} sizes="(min-width: 1024px) 20vw, 30vw" />
                 </span>
-                <span className="font-display text-[15px] md:text-lg">{p.name}</span>
+                <span className="font-display text-[15px] leading-tight md:text-lg">{f.name}</span>
               </Link>
             </li>
           ))}

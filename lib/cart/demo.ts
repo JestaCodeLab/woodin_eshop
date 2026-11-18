@@ -66,7 +66,7 @@ async function build(lines: Stored): Promise<Cart> {
       productId: p.id,
       slug: p.slug,
       name: p.title,
-      image: p.images[0]?.src ?? null,
+      image: p.images[0]?.thumb ?? null,
       quantity: l.qty,
       variation: l.variation,
       unitPrice: unit,
@@ -125,6 +125,11 @@ export const demoCart: CartBackend = {
     const next = (await read()).filter((l) => lineKey(l.id, l.variation) !== key);
     await write(next);
     return build(next);
+  },
+
+  async clear() {
+    await write([]);
+    return build([]);
   },
 
   async coupon() {

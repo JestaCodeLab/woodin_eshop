@@ -1,15 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Jost } from "next/font/google";
+import { DM_Serif_Display, Jost } from "next/font/google";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
-// Display face. Swap for the licensed Le Jeune Deck with next/font/local and
-// keep the --font-bodoni variable name (or update --font-display in globals.css).
-const bodoni = Bodoni_Moda({
-  variable: "--font-bodoni",
+// Display face: DM Serif Display (single weight, regular + italic). Swap for the licensed
+// Le Jeune Deck with next/font/local and keep the --font-dm-serif variable name
+// (or update --font-display in globals.css).
+const displayFont = DM_Serif_Display({
+  variable: "--font-dm-serif",
   subsets: ["latin"],
+  weight: "400",
   style: ["normal", "italic"],
-  axes: ["opsz"],
   display: "swap",
 });
 
@@ -33,10 +35,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${bodoni.variable} ${jost.variable}`}>
+    <html lang="en" className={`${displayFont.variable} ${jost.variable}`}>
       <body className="flex min-h-dvh flex-col bg-ivory font-text text-ink">
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <CartProvider>
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

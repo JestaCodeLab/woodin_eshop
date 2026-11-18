@@ -1,0 +1,7 @@
+[
+  { "id": "osu", "name": "[Store name] — Osu", "region": "Greater Accra", "address": "[Street address], Osu, Accra" },
+  { "id": "accra-mall", "name": "[Store name] — Accra Mall", "region": "Greater Accra", "address": "[Street address], Tetteh Quarshie, Accra" },
+  { "id": "makola", "name": "[Store name] — Makola", "region": "Greater Accra", "address": "[Street address], Makola, Accra" },
+  { "id": "kumasi", "name": "[Store name] — Kumasi", "region": "Ashanti", "address": "[Street address], Adum, Kumasi" },
+  { "id": "takoradi", "name": "[Store name] — Takoradi", "region": "Other regions", "address": "[Street address], Takoradi" }
+]

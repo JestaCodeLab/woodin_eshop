@@ -22,6 +22,8 @@ export interface WCImage {
   id: number;
   src: string;
   thumbnail: string;
+  /** "url 1000w, url 600w, ..." of the sizes WordPress generated. */
+  srcset: string;
   alt: string;
 }
 
@@ -76,27 +78,6 @@ export interface WCCategory {
   count: number;
 }
 
-// WordPress REST (wp/v2)
-export interface WPTerm {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-export interface WPPost {
-  id: number;
-  slug: string;
-  date: string;
-  title: { rendered: string };
-  excerpt?: { rendered: string };
-  content?: { rendered: string };
-  categories: number[];
-  _embedded?: {
-    "wp:featuredmedia"?: { source_url: string; alt_text?: string }[];
-    "wp:term"?: WPTerm[][];
-  };
-}
-
 // ---------------------------------------------------------------------------
 // App-level types (what pages and components consume)
 // ---------------------------------------------------------------------------
@@ -119,7 +100,12 @@ export interface Price {
 }
 
 export interface ProductImage {
+  /** Full-size original. Use for the product page. */
   src: string;
+  /** ~600px wide variant for cards (the origin is slow: smaller sources load far faster). */
+  card: string;
+  /** ~300px wide variant for small thumbnails (cart, checkout, look lists). */
+  thumb: string;
   alt: string;
 }
 
@@ -170,22 +156,10 @@ export interface ProductQuery {
   inStock?: boolean;
 }
 
-export interface Post {
-  id: number;
-  slug: string;
-  title: string;
-  /** Plain-text excerpt. */
-  excerpt: string;
-  /** Raw WordPress HTML. Sanitise before rendering (step 4). Only set on single-post fetches. */
-  contentHtml?: string;
-  date: string;
-  image: { src: string; alt: string } | null;
-  categories: { id: number; slug: string; name: string }[];
-}
-
-export interface PostPage {
-  items: Post[];
-  total: number;
-  totalPages: number;
-  page: number;
+/** Demo size availability. WooCommerce has no sizes (see lib/demo-stock.ts). */
+export interface SizeOption {
+  label: string;
+  state: "in" | "low" | "out";
+  /** Units left, only when state is "low". */
+  left?: number;
 }

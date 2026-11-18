@@ -1,29 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LOGO } from "@/lib/images";
+import { MAIN_LINKS, isExternal, shopHref } from "@/lib/links";
 import { NewsletterForm } from "./NewsletterForm";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Shop",
     links: [
-      { label: "New In", href: "/shop" },
-      { label: "Ready To Wear", href: "/ready-to-wear" },
-      { label: "Fabrics", href: "/fabrics" },
-      { label: "Accessories", href: "/shop?cat=accessories" },
-      { label: "Gift cards", href: "#" },
+      { label: "Men", href: shopHref("men") },
+      { label: "Women", href: shopHref("women") },
+      { label: "Fabrics", href: shopHref("fabrics") },
+      { label: "Accessories", href: shopHref("accessories") },
     ],
   },
   {
-    title: "Discover",
-    links: [
-      { label: "Lookbook", href: "/lookbook" },
-      { label: "Insights", href: "/insights" },
-      { label: "Our Story", href: "#" },
-      { label: "News & Events", href: "/insights" },
-    ],
-  },
-  {
+    // TODO: point at the real help pages once Woodin has them (see TODO.md).
     title: "Help",
     links: [
       { label: "Track your order", href: "#" },
@@ -36,8 +28,8 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Stores",
     links: [
-      { label: "Store locator", href: "/stores" },
-      { label: "Click & collect", href: "/stores" },
+      { label: "Store locator", href: MAIN_LINKS.stores },
+      { label: "Click & collect", href: MAIN_LINKS.stores },
       { label: "Wholesale enquiries", href: "#" },
     ],
   },
@@ -96,11 +88,18 @@ export function Footer() {
         {COLUMNS.map((col) => (
           <nav key={col.title} aria-label={col.title} className="flex flex-[1_1_160px] flex-col gap-3 text-sm font-light">
             <span className="label-caps mb-1 tracking-[0.18em] text-ivory">{col.title}</span>
-            {col.links.map((l) => (
-              <Link key={l.label} href={l.href} className="inline-block py-0.5 text-[#e9ded0] no-underline hover:text-white hover:underline">
-                {l.label}
-              </Link>
-            ))}
+            {col.links.map((l) => {
+              const cls = "inline-block py-0.5 text-[#e9ded0] no-underline hover:text-white hover:underline";
+              return isExternal(l.href) ? (
+                <a key={l.label} href={l.href} className={cls}>
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={l.label} href={l.href} className={cls}>
+                  {l.label}
+                </Link>
+              );
+            })}
           </nav>
         ))}
       </div>

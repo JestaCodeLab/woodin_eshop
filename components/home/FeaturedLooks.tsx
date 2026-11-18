@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { CoverImage } from "@/components/ui/CoverImage";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { IMG } from "@/lib/images";
+import { shopHref } from "@/lib/links";
 
 interface TileProps {
   href: string;
@@ -76,7 +77,7 @@ export function FeaturedLooks() {
           <Eyebrow className="tracking-[0.28em]">Our styles</Eyebrow>
           <h2 className="m-0 font-display text-[clamp(36px,5vw,58px)] font-normal leading-none">Featured looks</h2>
         </div>
-        <Button href="/lookbook" variant="outline">
+        <Button href={shopHref()} variant="outline">
           View more
         </Button>
       </div>
@@ -84,7 +85,7 @@ export function FeaturedLooks() {
       <div className="grid gap-2 px-2 lg:grid-cols-2">
         <LookTile
           kind="feature"
-          href="/ready-to-wear"
+          href={shopHref()}
           img={IMG.womanBoxyShirt}
           alt="Woman in a yellow and red patchwork boxy shirt with a black fringe skirt"
           pos="50% 30%"
@@ -97,7 +98,7 @@ export function FeaturedLooks() {
         <div className="flex flex-col gap-2">
           <LookTile
             kind="wide"
-            href="/ready-to-wear?cat=men"
+            href={shopHref("men")}
             img={IMG.menHeritage}
             alt="Three men in heritage print shirts against a sky gradient"
             pos="50% 28%"
@@ -110,7 +111,7 @@ export function FeaturedLooks() {
           <div className="grid gap-2 sm:grid-cols-2">
             <LookTile
               kind="small"
-              href="/ready-to-wear"
+              href={shopHref("men")}
               img={IMG.menPatchworkHat}
               alt="Two men in terracotta and green patchwork shirts, one in a straw hat"
               pos="50% 30%"
@@ -122,7 +123,7 @@ export function FeaturedLooks() {
             />
             <LookTile
               kind="small"
-              href="/ready-to-wear?cat=women"
+              href={shopHref("women")}
               img={IMG.womanShorts}
               alt="Woman in a white tee and yellow patchwork paperbag shorts"
               pos="50% 30%"
