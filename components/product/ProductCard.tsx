@@ -34,6 +34,12 @@ export function ProductCard({
             priority={priority}
             className="transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           />
+          {product.hover ? (
+            /* Model view: fades in over the swatch on hover (desktop pointers only). */
+            <span className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100 motion-reduce:transition-none">
+              <CoverImage src={product.hover.src} alt="" pos={product.hover.pos} sizes={sizes} />
+            </span>
+          ) : null}
         </Link>
         {badge ? (
           <span className="absolute left-3 top-3 bg-ivory px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em]">

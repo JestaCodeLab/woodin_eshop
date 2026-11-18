@@ -7,6 +7,7 @@ import type { Product } from "@/lib/types";
  */
 export function ProductGallery({ product }: { product: Product }) {
   const [main, second, third] = product.images;
+  const model = product.modelView;
   if (!main) {
     return <div role="img" aria-label="No photo available" className="aspect-[4/5] bg-sand" />;
   }
@@ -17,14 +18,18 @@ export function ProductGallery({ product }: { product: Product }) {
       <div className="relative col-span-2 aspect-[4/5] overflow-hidden bg-sand">
         <CoverImage src={main.src} alt={main.alt} pos="50% 20%" sizes={sizes} priority />
       </div>
-      <div className="relative aspect-square overflow-hidden bg-sand">
-        <CoverImage
-          src={(second ?? main).src}
-          alt={second ? second.alt : `Close-up of the print on ${product.title}`}
-          pos={second ? "50% 30%" : "50% 25%"}
-          zoom={second ? undefined : 1.9}
-          sizes="(min-width: 1024px) 27vw, 50vw"
-        />
+      <div className={`relative aspect-square overflow-hidden ${model ? "bg-white" : "bg-sand"}`}>
+        {model ? (
+          <CoverImage src={model.src} alt={model.alt} pos={model.pos} sizes="(min-width: 1024px) 27vw, 50vw" />
+        ) : (
+          <CoverImage
+            src={(second ?? main).src}
+            alt={second ? second.alt : `Close-up of the print on ${product.title}`}
+            pos={second ? "50% 30%" : "50% 25%"}
+            zoom={second ? undefined : 1.9}
+            sizes="(min-width: 1024px) 27vw, 50vw"
+          />
+        )}
       </div>
       <div className="relative aspect-square overflow-hidden bg-sand">
         <CoverImage
