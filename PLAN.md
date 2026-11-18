@@ -251,3 +251,13 @@ Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `s
 - **Map:** Leaflet + OpenStreetMap tiles (no API key), W-mark pins, only for stores that have lat+lng; loaded client-side and code-split to this page. One-finger map drag is off on touch screens so it can't trap page scroll.
 - **Few stores:** search and region chips appear only when there are more than 3 stores. "Use my location" (browser geolocation, sorted by distance, nothing sent anywhere) appears when any store has coordinates.
 - Deep link: `/stores?store=<id>` preselects a store.
+
+## 15. Favicon and SEO
+
+- **Icons** (generated from the W mark): `app/favicon.ico` (16/32/48), `app/icon.png` (512), `app/apple-icon.png` (180), `public/icon-192.png` + `icon-512.png` (maskable), all brown tile + white W. `app/manifest.ts` (theme `#521B0A`).
+- **Share image:** `app/opengraph-image.jpg` / `twitter-image.jpg` (1200×630, campaign photo + logo) with alt text. Products use their own photo.
+- **Metadata:** title template `%s · Woodin`; per-page description and canonical; `/shop` titles per section (Men's wear, Women's wear, Wax-print fabrics, Shop all) with `?page=N` self-canonical. Filtered, searched, sorted and type views are `noindex, follow`. Cart/checkout `noindex`.
+- **`robots.txt`:** blocks `/api/`, `/cart`, `/checkout`; blocks everything on Vercel previews (`VERCEL_ENV` ≠ production).
+- **`sitemap.xml`:** static pages + shop sections + every product (442), cached 5 min; falls back to the static pages if the store is unreachable.
+- **Structured data (JSON-LD):** Organization + WebSite (with site search) on every page; Product + BreadcrumbList on products; ClothingStore per real store on `/stores`. **Product `offers` are deliberately omitted while prices come from the demo layer** (`Price.isDemo`); they appear automatically once WooCommerce has real prices.
+- **Env:** `NEXT_PUBLIC_SITE_URL` (canonical origin; falls back to Vercel's production URL), optional `GOOGLE_SITE_VERIFICATION`.

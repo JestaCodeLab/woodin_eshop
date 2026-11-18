@@ -10,13 +10,45 @@ import { LogoLoader } from "@/components/ui/LogoLoader";
 import { Pagination } from "@/components/ui/Pagination";
 import { SORTS, filterShop, getSectionProducts, parseShopParams, sectionLabel, shopQuery } from "@/lib/catalogue";
 import { SHOP_SECTIONS } from "@/lib/links";
+import { SITE_NAME } from "@/lib/site";
 import { toCardData } from "@/lib/normalize";
 import { getCategories } from "@/lib/woocommerce";
 
-export const metadata: Metadata = {
-  title: "Shop",
-  description: "Shop Woodin ready-to-wear and wax-print fabrics. Pay with Mobile Money or card.",
-};
+const SECTION_SEO = {
+  men: { title: "Men's wear", description: "Shop Woodin men's wear: wax-print shirts, polos and tees. Pay with MTN MoMo, Telecel Cash, AT Money or card." },
+  women: { title: "Women's wear", description: "Shop Woodin women's wear: wax-print dresses, tops, trousers and skirts. Pay with MoMo or card, collect free in store." },
+  fabrics: { title: "Wax-print fabrics", description: "Shop Woodin wax-print fabrics by the piece. Choose your print online and collect free in a Woodin store." },
+} as const;
+
+/**
+ * Titles and canonicals per section. Filtered, searched and sorted views are kept out of the index
+ * (they are near-duplicates of the section page); plain pagination stays indexable.
+ */
+export async function generateMetadata({ searchParams }: PageProps<"/shop">): Promise<Metadata> {
+  const p = parseShopParams(await searchParams);
+  const seo = p.cat ? SECTION_SEO[p.cat as keyof typeof SECTION_SEO] : undefined;
+  const title = seo?.title ?? "Shop all";
+  const description = seo?.description ?? "Shop all Woodin wax-print ready-to-wear and fabrics. Pay with MTN MoMo, Telecel Cash, AT Money or card.";
+  const filtered = Boolean(p.q || p.type || p.min !== undefined || p.max !== undefined || p.stock || p.sort !== "featured");
+  const canonical = `/shop${shopQuery(p, { type: undefined, q: undefined, min: undefined, max: undefined, stock: undefined, sort: undefined })}`;
+
+  return {
+    title: p.page > 1 ? `${title} (page ${p.page})` : title,
+    description,
+    alternates: { canonical },
+    // Setting openGraph replaces the inherited block, so repeat site name, locale and the share image.
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "en_GH",
+      title: `${title} · Woodin`,
+      description,
+      url: canonical,
+      images: [{ url: "/opengraph-image.jpg", width: 1200, height: 630, alt: "Woodin: wax-print ready-to-wear and fabrics" }],
+    },
+    robots: filtered ? { index: false, follow: true } : undefined,
+  };
+}
 
 async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">["searchParams"] }) {
   const params = parseShopParams(await searchParams);
