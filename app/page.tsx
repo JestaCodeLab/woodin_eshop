@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { FeaturedLooks } from "@/components/home/FeaturedLooks";
 import { Hero } from "@/components/home/Hero";
@@ -8,6 +9,8 @@ import { SERVICES, WEAR_WOODIN_TILES } from "@/data/home";
 
 /** Reserves space while a live section loads, so the page does not jump. */
 const Reserve = ({ h }: { h: string }) => <div aria-hidden="true" className={h} />;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function HomePage() {
   return (
