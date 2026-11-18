@@ -6,7 +6,7 @@ import { WishlistButton } from "./WishlistButton";
 
 interface ProductCardProps {
   product: ProductCardData;
-  /** Tailwind aspect class for the image box. Design uses ~7:10 on Home, shorter on Shop. */
+  /** Tailwind aspect class for the image box. 4:5 (the design's 7:10 felt too tall). */
   aspect?: string;
   sizes?: string;
   priority?: boolean;
@@ -14,7 +14,7 @@ interface ProductCardProps {
 
 export function ProductCard({
   product,
-  aspect = "aspect-[7/10]",
+  aspect = "aspect-[4/5]",
   sizes = "(min-width: 1024px) 25vw, 50vw",
   priority,
 }: ProductCardProps) {

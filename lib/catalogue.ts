@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { SHOP_SECTIONS, type ShopSectionKey } from "./links";
-import { getProducts } from "./woocommerce";
+import { getCategories, getProducts } from "./woocommerce";
 import type { Product } from "./types";
 
 /**
@@ -17,19 +17,33 @@ import type { Product } from "./types";
 // Fetching (cached)
 // ---------------------------------------------------------------------------
 
-/** Every product in a WooCommerce category (all pages), cached. */
+/**
+ * Every product in a WooCommerce category (all pages), cached.
+ * Page count comes from the cached category tree, so all pages are requested in ONE parallel
+ * round (the origin is slow: two sequential rounds doubled the wait). If the tree is stale and
+ * more pages exist, the remainder is fetched afterwards.
+ */
 async function getAllInCategory(wcSlug: string): Promise<Product[]> {
   "use cache";
   cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
   cacheTag("products");
 
-  const first = await getProducts({ category: wcSlug, perPage: 100, page: 1 });
-  const rest = await Promise.all(
-    Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) =>
-      getProducts({ category: wcSlug, perPage: 100, page: i + 2 }),
-    ),
+  const categories = await getCategories();
+  const expected = Math.max(1, Math.ceil((categories.find((c) => c.slug === wcSlug)?.count ?? 0) / 100));
+  const pages = await Promise.all(
+    Array.from({ length: expected }, (_, i) => getProducts({ category: wcSlug, perPage: 100, page: i + 1 })),
   );
-  return [first, ...rest].flatMap((r) => r.items);
+  const totalPages = pages[0].totalPages;
+  if (totalPages > expected) {
+    pages.push(
+      ...(await Promise.all(
+        Array.from({ length: totalPages - expected }, (_, i) =>
+          getProducts({ category: wcSlug, perPage: 100, page: expected + i + 1 }),
+        ),
+      )),
+    );
+  }
+  return pages.flatMap((r) => r.items);
 }
 
 /**

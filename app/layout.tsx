@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Serif_Display, Jost } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Footer } from "@/components/layout/Footer";
+import { PageLoader } from "@/components/layout/PageLoader";
 import "./globals.css";
 
 // Display face: DM Serif Display (single weight, regular + italic). Swap for the licensed
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${displayFont.variable} ${jost.variable}`}>
       <body className="flex min-h-dvh flex-col bg-ivory font-text text-ink">
+        <PageLoader />
         <CartProvider>
           <div className="flex-1">{children}</div>
           <Footer />

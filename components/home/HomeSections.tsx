@@ -2,6 +2,7 @@ import { FabricsBand } from "@/components/home/FabricsBand";
 import { NewIn } from "@/components/home/NewIn";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { SHOP_THE_LOOK_IDS } from "@/data/home";
+import { shopHref } from "@/lib/links";
 import { toCardData } from "@/lib/normalize";
 import { safely } from "@/lib/safely";
 import { getProductById, getProducts } from "@/lib/woocommerce";
@@ -15,6 +16,28 @@ export async function NewInSection() {
   const page = await safely(() => getProducts({ category: "ready-to-wear", perPage: 4 }));
   if (!page || page.items.length === 0) return null;
   return <NewIn products={page.items.map(toCardData)} />;
+}
+
+/** Women's wear, without repeating the pieces already shown in "New in" above it. */
+export async function WomenSection() {
+  const [newIn, women] = await Promise.all([
+    safely(() => getProducts({ category: "ready-to-wear", perPage: 4 })),
+    safely(() => getProducts({ category: "ladies-wear", perPage: 16 })),
+  ]);
+  if (!women) return null;
+  const shown = new Set((newIn?.items ?? []).map((p) => p.id));
+  const items = women.items.filter((p) => !shown.has(p.id)).slice(0, 8);
+  if (items.length === 0) return null;
+  return (
+    <NewIn
+      products={items.map(toCardData)}
+      eyebrow="Women"
+      heading="Women's wear"
+      linkLabel="Shop women"
+      linkHref={shopHref("women")}
+      eager={false}
+    />
+  );
 }
 
 export async function ShopTheLookSection() {
