@@ -11,14 +11,12 @@ export const metadata: Metadata = {
   description: "Find a Woodin store near you, see opening hours and collect your online order in store.",
 };
 
-export default async function StoresPage({ searchParams }: PageProps<"/stores">) {
-  const sp = await searchParams;
-  const initial = typeof sp.store === "string" ? sp.store : undefined;
+export default function StoresPage() {
   return (
     <>
       <Header />
       <main>
-        <StoreLocator stores={getStores()} initialId={initial} />
+        <StoreLocator stores={getStores()} />
 
         <section className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-espresso">
           <Image src={IMG.menSunset} alt="" fill sizes="100vw" className="object-cover" style={{ objectPosition: "50% 35%" }} />
