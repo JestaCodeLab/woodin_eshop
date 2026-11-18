@@ -1,8 +1,3 @@
-import stores from "@/data/stores.json";
-
-/** Demo store list for the click & collect dropdown. All values are placeholders. [CONFIRM] */
-export const PICKUP_STORES: { id: string; name: string; region: string; address: string }[] = stores;
-
 export type ZoneId = "accra" | "nation" | "store";
 
 /** Delivery fees are unconfirmed ([FEE]); null renders the placeholder and is left out of the total. */

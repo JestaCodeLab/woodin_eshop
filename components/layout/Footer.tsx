@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LOGO } from "@/lib/images";
-import { MAIN_LINKS, isExternal, shopHref } from "@/lib/links";
+import { isExternal, shopHref } from "@/lib/links";
 import { NewsletterForm } from "./NewsletterForm";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
@@ -27,8 +27,8 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Stores",
     links: [
-      { label: "Store locator", href: MAIN_LINKS.stores },
-      { label: "Click & collect", href: MAIN_LINKS.stores },
+      { label: "Store locator", href: "/stores" },
+      { label: "Click & collect", href: "/stores" },
       { label: "Wholesale enquiries", href: "#" },
     ],
   },

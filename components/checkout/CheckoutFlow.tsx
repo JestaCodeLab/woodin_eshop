@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
 import { IMG, LOGO } from "@/lib/images";
 import { MAIN_LINKS } from "@/lib/links";
-import { METHODS, PICKUP_STORES, ZONES, type MethodId, type ZoneId } from "@/lib/checkout-config";
+import { METHODS, ZONES, type MethodId, type ZoneId } from "@/lib/checkout-config";
 
 /**
  * Checkout, demo mode. Nothing here is sent anywhere or stored: the form lives in component
@@ -39,7 +39,13 @@ function Field({
   );
 }
 
-export function CheckoutFlow() {
+export interface PickupStore {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export function CheckoutFlow({ pickupStores }: { pickupStores: PickupStore[] }) {
   const { cart, status, clear } = useCart();
   const search = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
@@ -251,8 +257,8 @@ export function CheckoutFlow() {
               </div>
             ) : (
               <Field id="co-store" label="Collect from" error={errors.store}>
-                <select id="co-store" name="store" defaultValue={PICKUP_STORES[0].id} className={`${inputCls} px-3.5`}>
-                  {PICKUP_STORES.map((s) => (
+                <select id="co-store" name="store" defaultValue={pickupStores[0]?.id} className={`${inputCls} px-3.5`}>
+                  {pickupStores.map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>

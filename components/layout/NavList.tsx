@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { MAIN_LINKS, isExternal, shopHref } from "@/lib/links";
+import { isExternal, shopHref } from "@/lib/links";
 
 export type NavKey = "men" | "women" | "fabrics" | "stores";
 
-/** Eshop header: exactly these four. Stores lives on the main site, so it links out. */
+/** Eshop header nav: exactly these four. */
 export const NAV_ITEMS: { key: NavKey; label: string; href: string }[] = [
   { key: "men", label: "Men", href: shopHref("men") },
   { key: "women", label: "Women", href: shopHref("women") },
   { key: "fabrics", label: "Fabrics", href: shopHref("fabrics") },
-  { key: "stores", label: "Stores", href: MAIN_LINKS.stores },
+  { key: "stores", label: "Stores", href: "/stores" },
 ];
 
 /** Presentational nav row. Pure (no hooks), so it also serves as the Suspense fallback. */
