@@ -182,3 +182,11 @@ Many "product" images are crops of the same campaign photos (different `object-p
 8. **Fonts.** Bodoni Moda is a Google Font and loads through `next/font/google`. Confirm that is fine for production for now, with Le Jeune Deck swapped in later via the `--font-display` variable.
 9. **Next.js version.** I'll scaffold with the current stable (16, with `proxy.ts` rather than `middleware.ts`). Any reason to pin 15?
 10. **Package manager / Vercel.** Defaulting to npm. Should I link a Vercel project or leave deployment to you?
+
+## 9. Decisions made after step 2
+
+- **Live site, read-only.** `WC_STORE_URL=https://woodinfashion.com` is used for catalogue, categories and Insights only (GET). The live site has no active ecommerce: 448 products, all `simple`, every price `0` (USD), `is_purchasable: false`, no attributes or variations, no descriptions.
+- **Cart and checkout stay local.** `/api/cart/*` uses a demo cart in an httpOnly cookie (`woodin_demo_cart`, ids and quantities only; prices are looked up server-side). The Store API cart (`lib/cart/woo.ts`, Cart-Token cookie) exists behind `WC_ALLOW_CART_WRITES=true` and refuses to run against `woodinfashion.com`.
+- **Demo override layer** (`data/product-overrides.ts`): SKU → display name, category line, GH₵ price, badge. Names come from the product photos; prices are invented. A real WooCommerce price above 0 always wins. Products without an entry use rules in `lib/normalize.ts` (strip `RTW-`, `Range · code` for fabrics, per-category default prices).
+- **Caching:** Cache Components is on, so ISR is `'use cache'` + `cacheLife({ stale: 300, revalidate: 300, expire: 86400 })` + `cacheTag`. The webhook expires tags with `revalidateTag(tag, { expire: 0 })`.
+- **Known gap for step 4:** WooCommerce cannot sort or filter by price (all 0). The Shop price filter and price sort must run in the app over `Product.price.amount`. Sizes and colours do not exist in WooCommerce; the variation picker will use a demo generator.
