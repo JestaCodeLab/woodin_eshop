@@ -83,10 +83,10 @@ export function StoreLocator({ stores, initialId }: { stores: Store[]; initialId
 
   return (
     <>
-      <section className="content-wrap flex flex-wrap items-end justify-between gap-6 pb-9 pt-12 md:pt-[72px]">
+      <section className="content-wrap flex flex-wrap items-end justify-between gap-6 pb-8 pt-10 md:pt-14">
         <div className="flex flex-col gap-3.5">
           <span className="label-caps tracking-[0.28em] text-gold">Visit us</span>
-          <h1 className="m-0 font-display text-[clamp(44px,7vw,96px)] font-normal leading-[0.95] text-brown">Find a store</h1>
+          <h1 className="m-0 font-display text-[clamp(34px,4.5vw,60px)] font-normal leading-none text-brown">Find a store</h1>
         </div>
 
         <div className="flex flex-col gap-2 md:max-w-[520px] md:flex-[0_1_520px]">
