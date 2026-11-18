@@ -190,3 +190,35 @@ Many "product" images are crops of the same campaign photos (different `object-p
 - **Demo override layer** (`data/product-overrides.ts`): SKU → display name, category line, GH₵ price, badge. Names come from the product photos; prices are invented. A real WooCommerce price above 0 always wins. Products without an entry use rules in `lib/normalize.ts` (strip `RTW-`, `Range · code` for fabrics, per-category default prices).
 - **Caching:** Cache Components is on, so ISR is `'use cache'` + `cacheLife({ stale: 300, revalidate: 300, expire: 86400 })` + `cacheTag`. The webhook expires tags with `revalidateTag(tag, { expire: 0 })`.
 - **Known gap for step 4:** WooCommerce cannot sort or filter by price (all 0). The Shop price filter and price sort must run in the app over `Product.price.amount`. Sizes and colours do not exist in WooCommerce; the variation picker will use a demo generator.
+
+## 10. Direction change: this app is the eshop at shop.woodinfashion.com
+
+Supersedes the route map in section 2. The marketing/editorial site stays on woodinfashion.com (WordPress). The main site's menu gets a **"Shop Now"** item that links here. This app is a small, focused eshop.
+
+### Routes (5 pages, plus the cart API)
+
+| Route | Purpose |
+|---|---|
+| `/` | Eshop home (the designed home page, re-pointed at shop categories) |
+| `/shop` | All products. Filters in the URL: `?cat=&size=&colour=&min=&max=&stock=&sort=&page=` |
+| `/product/[slug]` | Product detail |
+| `/cart` | Bag |
+| `/checkout` | Summary + delivery + payment choice + hand-off |
+
+Dropped from this app (they live on the main site): `/ready-to-wear`, `/fabrics`, `/lookbook`, `/insights` (+ `[slug]`), `/stores`. Not built, so nothing is deleted. The design boards for them are simply unused.
+
+### What changes in what exists
+
+- **Header:** nav becomes shop-centred: *Shop*, *Ready To Wear*, *Fabrics*, *Accessories* (each a `/shop?cat=` filter), plus a clear way back to woodinfashion.com. Main-site pages (About Us, Lookbook, Blog) are external links to `https://woodinfashion.com/woodin/`, `/what-to-wear/`, `/blog/`. "Find a store" and EN · FR link out.
+- **Footer:** same columns; Discover/Help/Stores links point at woodinfashion.com.
+- **Home:** keep every designed section. World of Woodin cards, Featured looks and Hero links go to `/shop` filters. The Insights teaser becomes "From the blog" and links to the real posts on woodinfashion.com (data already available via `wp/v2/posts`). Lookbook-style content links out.
+- **Metadata / SEO:** `NEXT_PUBLIC_SITE_URL=https://shop.woodinfashion.com`, canonical URLs, product JSON-LD, `sitemap.xml` for `/`, `/shop`, products only.
+- **Click & collect:** the store list is only needed inside checkout (pickup selector), so `data/stores.json` stays, but there is no store-locator page.
+
+### Same-domain advantage
+
+`shop.` and the main site share a registrable domain, so cookies can be scoped to `.woodinfashion.com`. That keeps a future WooCommerce-session hand-off (option (c) in question 3) and a bag count on the main site's menu possible without cross-site tricks. Not needed while cart and checkout are local.
+
+### Deployment
+
+Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `shop` → Vercel in the woodinfashion.com DNS), `WC_STORE_URL=https://woodinfashion.com`, `WC_ALLOW_CART_WRITES=false`.
