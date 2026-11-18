@@ -6,6 +6,7 @@ import {
   PRODUCT_OVERRIDES,
 } from "@/data/product-overrides";
 import { modelShotFor } from "@/data/fabric-models";
+import { sizeOptionsFor } from "./demo-stock";
 import { decodeEntities, formatMoney, stripHtml } from "./format";
 import type {
   Category,
@@ -168,7 +169,10 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
 /** Adapter for <ProductCard>. */
 export function toCardData(p: Product): ProductCardData {
   return {
+    id: p.id,
     slug: p.slug,
+    inStock: p.inStock,
+    sizes: sizeOptionsFor(p),
     title: p.title,
     cat: p.categoryLabel,
     badge: p.badge,

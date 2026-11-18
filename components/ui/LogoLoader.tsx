@@ -4,25 +4,25 @@ import { LOGO } from "@/lib/images";
 interface LogoLoaderProps {
   /** Announced to screen readers, e.g. "Loading products". */
   label?: string;
-  /** Logo height: sm 36px, md 48px, lg 64px. */
+  /** W height: sm 40px, md 56px, lg 80px. */
   size?: "sm" | "md" | "lg";
   /** Extra classes for the wrapper, e.g. "min-h-[60vh]" to reserve space. */
   className?: string;
 }
 
-const HEIGHT = { sm: "h-9", md: "h-12", lg: "h-16" } as const;
+const HEIGHT = { sm: "h-10", md: "h-14", lg: "h-20" } as const;
 
 /**
- * Woodin logo that gently pulses over a sweeping line. Used by the full-screen page loader and
+ * The Woodin "W" mark (no wordmark) pulsing gently over a sweeping line. Used by the full-screen page loader and
  * as the in-page loading state (shop products, route changes). Pure CSS: no client JS needed.
  */
 export function LogoLoader({ label = "Loading", size = "md", className = "" }: LogoLoaderProps) {
   return (
     <div role="status" aria-live="polite" className={`flex flex-col items-center justify-center gap-5 ${className}`}>
       <Image
-        src={LOGO.brown.src}
-        width={LOGO.brown.width}
-        height={LOGO.brown.height}
+        src={LOGO.mark.src}
+        width={LOGO.mark.width}
+        height={LOGO.mark.height}
         alt=""
         priority
         className={`woodin-logo ${HEIGHT[size]} w-auto animate-[woodin-pulse_1.8s_ease-in-out_infinite]`}
