@@ -1,9 +1,10 @@
-export type ZoneId = "accra" | "nation" | "store";
+/** "store" (click & collect) or "zone-<WooCommerce zone id>"; fallback options use accra / nation / store. */
+export type ZoneId = string;
 
 /** Label used for the WooCommerce shipping line of a store-pickup order. */
 export const PICKUP_ZONE_LABEL = "Click & collect";
 
-/** Delivery fees are unconfirmed ([FEE]); null renders the placeholder and is left out of the total. */
+/** Built-in fallback options, used by the simulated checkout and when WooCommerce zones are unavailable. Fees are unconfirmed ([FEE]). */
 export const ZONES: { id: ZoneId; name: string; short: string; eta: string; fee: number | null }[] = [
   { id: "accra", name: "Accra & Tema", short: "Accra", eta: "Arrives by [DAY]", fee: null },
   { id: "nation", name: "Other regions", short: "Nationwide", eta: "[X] working days", fee: null },

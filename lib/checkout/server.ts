@@ -42,7 +42,7 @@ export interface Quote {
   usesDemoPrices: boolean;
 }
 
-export async function buildQuote(zone: DeliveryOption["id"]): Promise<Quote> {
+export async function buildQuote(zone: string): Promise<Quote> {
   const cart = await cartBackend().get();
   if (cart.items.length === 0) throw new CheckoutError(409, "empty_cart", "Your bag is empty.");
   if (cart.currency !== "GHS") throw new CheckoutError(500, "currency", "Unsupported currency.");
@@ -55,7 +55,7 @@ export async function buildQuote(zone: DeliveryOption["id"]): Promise<Quote> {
   const subtotal = cart.items.reduce((n, i) => n + (i.lineTotal ?? 0), 0);
   const threshold = freeDeliveryThreshold();
   // "Free Accra delivery over GH₵ X" (announcement bar + bag progress bar)
-  const shipping = zone === "accra" && threshold !== null && subtotal >= threshold ? 0 : option.fee;
+  const shipping = option.freeEligible && threshold !== null && subtotal >= threshold ? 0 : option.fee;
   return {
     cart,
     option,

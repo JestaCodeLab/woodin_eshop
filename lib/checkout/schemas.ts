@@ -14,7 +14,7 @@ export const startCheckoutSchema = z
       email: z.string().trim().toLowerCase().email().max(200),
     }),
     delivery: z.object({
-      zone: z.enum(["accra", "nation", "store"]),
+      zone: z.string().trim().regex(/^[a-z0-9-]{1,40}$/),
       address: z.string().trim().max(240).optional(),
       area: z.string().trim().max(160).optional(),
       storeId: z.string().trim().max(60).optional(),

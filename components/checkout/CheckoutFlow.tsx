@@ -52,6 +52,8 @@ export interface DeliveryChoice {
   short: string;
   eta: string;
   fee: number | null;
+  /** "Free Accra delivery over GH₵ X" applies to this option. */
+  freeEligible: boolean;
 }
 
 interface PaystackPopup {
@@ -99,7 +101,7 @@ export function CheckoutFlow({
   const formRef = useRef<HTMLFormElement>(null);
 
   const [step, setStep] = useState<Step>("form");
-  const [zoneId, setZoneId] = useState<ZoneId>("accra");
+  const [zoneId, setZoneId] = useState<ZoneId>(deliveryOptions[0]?.id ?? "store");
   const [methodId, setMethodId] = useState<MethodId>(
     METHODS.some((m) => m.id === search.get("pay")) ? (search.get("pay") as MethodId) : "mtn",
   );
@@ -116,7 +118,7 @@ export function CheckoutFlow({
   const money = (n: number | null) => (n === null ? "GH₵ [PRICE]" : formatMoney(n, currency));
   const subtotal = cart?.subtotal ?? 0;
   // Same rule the server applies: "Free Accra delivery over GH₵ X".
-  const feeFor = (z: DeliveryChoice) => (z.id === "accra" && freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold ? 0 : z.fee);
+  const feeFor = (z: DeliveryChoice) => (z.freeEligible && freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold ? 0 : z.fee);
   const fee = feeFor(zone);
   const total = subtotal + (fee ?? 0);
   const feeLabel = fee === null ? "GH₵ [FEE]" : fee === 0 ? "Free" : money(fee);
@@ -388,7 +390,7 @@ export function CheckoutFlow({
 
           <fieldset className="m-0 flex min-w-0 flex-col gap-3.5 border-0 p-0">
             <legend className="mb-4 p-0 font-display text-[30px]">2. Delivery</legend>
-            <div role="radiogroup" aria-label="Delivery option" className="grid gap-2.5 sm:grid-cols-3">
+            <div role="radiogroup" aria-label="Delivery option" className="grid gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
               {deliveryOptions.map((z) => (
                 <button
                   key={z.id}
@@ -399,7 +401,7 @@ export function CheckoutFlow({
                   className={`flex min-h-[110px] flex-col items-start gap-1 bg-white p-[18px] text-left ${zoneId === z.id ? radioOn : radioOff}`}
                 >
                   <span className="font-display text-xl">{z.name}</span>
-                  <span className="text-[13px] text-muted">{z.eta}</span>
+                  {z.eta ? <span className="text-[13px] text-muted">{z.eta}</span> : null}
                   <span className="mt-1.5 text-[15px]">{feeFor(z) === null ? "GH₵ [FEE]" : feeFor(z) === 0 ? "Free" : money(feeFor(z))}</span>
                 </button>
               ))}
