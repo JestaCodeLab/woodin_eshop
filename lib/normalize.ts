@@ -126,9 +126,7 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
     ? "rtw"
     : slugs.has("fabrics")
       ? "fabric"
-      : slugs.has("accessories")
-        ? "accessory"
-        : "other";
+      : "other";
 
   const override = PRODUCT_OVERRIDES[raw.sku];
   const title = override?.name ?? cleanTitle(raw.name, kind, leaf);

@@ -238,3 +238,8 @@ Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `s
 - **Home banner:** crossfading slider (4 slides, 6.5s auto-advance, side arrows, swipe). No pause button, dots, or pause-on-hover by request. Auto-advance is skipped for visitors who prefer reduced motion.
 - **Product cards:** image grows 5% on hover (`group-hover:scale-105`, 500ms; off for reduced motion).
 - **Images:** live-site photos use the WordPress-generated ~600px (cards) / ~300px (thumbs) variants, through Next's optimizer with a 30s timeout (the origin is slow).
+
+## 13. Scope trims
+
+- **No accessories** in the eshop: removed from `SHOP_SECTIONS`, the shop sidebar, footer, default catalogue and cart suggestions. Shop sections are Men, Women, Fabrics.
+- **"The World of Woodin" carousel removed** from Home. Home order: banner → New in → Featured looks → Women's wear → Shop the look → Fabrics → services → #WearWoodin.

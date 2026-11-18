@@ -4,8 +4,7 @@ import { Hero } from "@/components/home/Hero";
 import { FabricsSection, NewInSection, ShopTheLookSection, WomenSection } from "@/components/home/HomeSections";
 import { ServicesRow } from "@/components/home/ServicesRow";
 import { WearWoodin } from "@/components/home/WearWoodin";
-import { WorldCarousel } from "@/components/home/WorldCarousel";
-import { SERVICES, WEAR_WOODIN_TILES, WORLD_CARDS } from "@/data/home";
+import { SERVICES, WEAR_WOODIN_TILES } from "@/data/home";
 
 /** Reserves space while a live section loads, so the page does not jump. */
 const Reserve = ({ h }: { h: string }) => <div aria-hidden="true" className={h} />;
@@ -19,7 +18,6 @@ export default function HomePage() {
           <NewInSection />
         </Suspense>
       </div>
-      <WorldCarousel cards={WORLD_CARDS} />
       <FeaturedLooks />
       <Suspense fallback={<Reserve h="h-[1000px]" />}>
         <WomenSection />

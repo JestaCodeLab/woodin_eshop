@@ -12,7 +12,7 @@ interface Props {
   title: string;
   priceLabel: string;
   inStock: boolean;
-  /** Empty for products sold without sizes (fabrics, accessories). */
+  /** Empty for products sold without sizes (fabrics). */
   sizes: SizeOption[];
   /** Free-delivery threshold in GH₵, null when unconfigured. */
   threshold: number | null;
