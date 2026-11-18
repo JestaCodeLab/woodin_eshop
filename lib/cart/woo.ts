@@ -53,6 +53,7 @@ function toCart(c: WCCart): Cart {
     unitPrice: money(i.prices.price, i.prices.currency_minor_unit),
     lineTotal: money(i.totals.line_total, i.totals.currency_minor_unit),
     inStock: true,
+    demoPrice: false,
   }));
   const subtotal = money(c.totals.total_items, unit);
   const discount = money(c.totals.total_discount, unit);
