@@ -12,6 +12,8 @@ export interface ProductCardData {
   swatches: string[];
   /** Formatted price, or undefined to show the [PRICE] placeholder */
   price?: string;
+  /** Model view shown on hover (fabrics only), see data/fabric-models.ts */
+  hover?: { src: string; pos: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -134,6 +136,8 @@ export interface Product {
   badge?: string;
   /** Crop for the first image on cards. */
   pos: string;
+  /** Model wearing a Woodin print, for fabrics (hover on cards, tile on the product page). */
+  modelView?: { src: string; alt: string; pos: string };
   permalink: string;
 }
 

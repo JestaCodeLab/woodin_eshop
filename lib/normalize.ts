@@ -5,6 +5,7 @@ import {
   DEMO_PRICE_FABRIC_PIECE,
   PRODUCT_OVERRIDES,
 } from "@/data/product-overrides";
+import { modelShotFor } from "@/data/fabric-models";
 import { decodeEntities, formatMoney, stripHtml } from "./format";
 import type {
   Category,
@@ -104,6 +105,11 @@ function resolvePrice(raw: WCProduct, kind: ProductKind, leaf: Category | null, 
   return { amount: demo, currency: DEMO_CURRENCY, formatted: formatMoney(demo, DEMO_CURRENCY), isDemo: true };
 }
 
+function modelView(id: number): Product["modelView"] {
+  const shot = modelShotFor(id);
+  return shot ? { src: shot.src, alt: shot.alt, pos: shot.pos ?? "50% 45%" } : undefined;
+}
+
 export function normalizeProduct(raw: WCProduct, categories: Category[]): Product {
   const byId = new Map(categories.map((c) => [c.id, c]));
   const refs: Category[] = raw.categories.map(
@@ -154,6 +160,7 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
     shortDescription: stripHtml(raw.short_description ?? ""),
     badge: override?.badge,
     pos: override?.pos ?? DEFAULT_POS,
+    modelView: kind === "fabric" ? modelView(raw.id) : undefined,
     permalink: raw.permalink,
   };
 }
@@ -169,5 +176,6 @@ export function toCardData(p: Product): ProductCardData {
     pos: p.pos,
     swatches: [],
     price: p.price.amount === null ? undefined : p.price.formatted,
+    hover: p.modelView ? { src: p.modelView.src, pos: p.modelView.pos } : undefined,
   };
 }

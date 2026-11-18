@@ -1,5 +1,6 @@
 import { FabricsBand } from "@/components/home/FabricsBand";
 import { NewIn } from "@/components/home/NewIn";
+import { NewInTabs, type NewInTab } from "@/components/home/NewInTabs";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { SHOP_THE_LOOK_IDS } from "@/data/home";
 import { shopHref } from "@/lib/links";
@@ -13,9 +14,25 @@ import { getProductById, getProducts } from "@/lib/woocommerce";
  */
 
 export async function NewInSection() {
-  const page = await safely(() => getProducts({ category: "ready-to-wear", perPage: 4 }));
-  if (!page || page.items.length === 0) return null;
-  return <NewIn products={page.items.map(toCardData)} />;
+  const [fabrics, rtw] = await Promise.all([
+    safely(() => getProducts({ category: "fabrics", perPage: 4 })),
+    safely(() => getProducts({ category: "ready-to-wear", perPage: 4 })),
+  ]);
+  // Fabrics is the default (first) tab. If one list fails to load, show the other alone.
+  const tabs = [
+    fabrics?.items.length && {
+      id: "fabrics",
+      label: "Fabrics",
+      products: fabrics.items.map(toCardData),
+    },
+    rtw?.items.length && {
+      id: "rtw",
+      label: "Ready to wear",
+      products: rtw.items.map(toCardData),
+    },
+  ].filter((t): t is NewInTab => !!t);
+  if (tabs.length === 0) return null;
+  return <NewInTabs tabs={tabs} />;
 }
 
 /** Women's wear, without repeating the pieces already shown in "New in" above it. */
