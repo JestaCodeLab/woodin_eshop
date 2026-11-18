@@ -59,13 +59,16 @@ export function QuickAdd({ productId, title, inStock, sizes }: QuickAddProps) {
     else void addToBag();
   }
 
+  // Stay visible while the picker is open, while adding, and briefly after, even without hover.
+  const visible = open || pending || status !== "idle";
+
   return (
     <div ref={root} className="pointer-events-none absolute inset-0">
       {open ? (
         <div
           role="group"
           aria-label={`Choose a size for ${title}`}
-          className="pointer-events-auto absolute inset-x-2 bottom-14 bg-ivory p-3 shadow-[0_2px_14px_rgba(26,18,14,0.18)]"
+          className="pointer-events-auto absolute inset-x-2 bottom-[72px] bg-ivory p-3 shadow-[0_2px_14px_rgba(26,18,14,0.18)]"
         >
           <span className="label-caps mb-2 block text-[11px] tracking-[0.16em]">Select a size</span>
           <div className="grid grid-cols-5 gap-1.5">
@@ -99,14 +102,19 @@ export function QuickAdd({ productId, title, inStock, sizes }: QuickAddProps) {
         aria-busy={pending}
         aria-label={inStock ? `Add ${title} to bag` : `${title} is sold out`}
         aria-expanded={sizes.length > 0 ? open : undefined}
-        className="pointer-events-auto absolute bottom-1.5 right-1.5 flex h-11 w-11 items-center justify-center disabled:opacity-50"
+        className={`pointer-events-auto absolute bottom-2 right-2 flex h-14 w-14 items-center justify-center transition-opacity duration-300 disabled:opacity-50 ${
+          // Pointer devices: revealed on card hover (or keyboard focus). Touch devices can't hover, so it stays visible there.
+          visible
+            ? "opacity-100"
+            : "focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+        }`}
       >
         <span
-          className={`flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors ${
-            pending ? "animate-pulse bg-ivory text-brown" : status === "added" ? "bg-brown text-ivory" : status === "error" ? "bg-lowstock text-ivory" : "bg-ivory text-brown hover:bg-brown hover:text-ivory"
+          className={`flex h-[46px] w-[46px] items-center justify-center rounded-full shadow-[0_1px_8px_rgba(26,18,14,0.18)] transition-colors ${
+            pending ? "animate-pulse bg-brown text-white" : status === "added" ? "bg-instock-dot text-white" : status === "error" ? "bg-lowstock text-white" : "bg-brown text-white hover:bg-[#3a1307]"
           }`}
         >
-          {status === "added" ? <CheckIcon size={16} /> : <BagPlusIcon size={17} />}
+          {status === "added" ? <CheckIcon size={22} /> : <BagPlusIcon size={23} />}
         </span>
       </button>
 
