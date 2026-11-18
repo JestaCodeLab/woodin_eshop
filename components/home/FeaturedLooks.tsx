@@ -28,7 +28,13 @@ function LookTile({ href, img, alt, pos, eyebrow, title, cta, kind, className = 
         feature ? "p-6 md:p-14" : kind === "wide" ? "p-6 md:p-10" : "p-6 md:p-8"
       } ${className}`}
     >
-      <CoverImage src={img} alt={alt} pos={pos} sizes={sizes} />
+      <CoverImage
+        src={img}
+        alt={alt}
+        pos={pos}
+        sizes={sizes}
+        className="transition-transform duration-700 ease-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+      />
       <span
         aria-hidden="true"
         className={`absolute inset-0 ${

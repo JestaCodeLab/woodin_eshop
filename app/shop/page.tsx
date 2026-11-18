@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { AppliedFilters } from "@/components/shop/AppliedFilters";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { SortSelect } from "@/components/shop/SortSelect";
+import { LogoLoader } from "@/components/ui/LogoLoader";
 import { Pagination } from "@/components/ui/Pagination";
 import { SORTS, filterShop, getSectionProducts, parseShopParams, sectionLabel, shopQuery } from "@/lib/catalogue";
 import { SHOP_SECTIONS } from "@/lib/links";
@@ -16,20 +17,6 @@ export const metadata: Metadata = {
   title: "Shop",
   description: "Shop Woodin ready-to-wear and wax-print fabrics. Pay with Mobile Money or card.",
 };
-
-function ShopSkeleton() {
-  return (
-    <div aria-busy="true" aria-label="Loading products" className="grid grid-cols-2 gap-x-3 gap-y-10 md:gap-x-5 lg:grid-cols-3">
-      {Array.from({ length: 9 }, (_, i) => (
-        <div key={i} className="flex flex-col gap-3">
-          <div className="aspect-[7/10] animate-pulse bg-sand" />
-          <div className="h-4 w-2/3 animate-pulse bg-sand" />
-          <div className="h-4 w-1/3 animate-pulse bg-sand" />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">["searchParams"] }) {
   const params = parseShopParams(await searchParams);
@@ -115,8 +102,8 @@ export default function ShopPage(props: PageProps<"/shop">) {
       <main>
         <Suspense
           fallback={
-            <div className="content-wrap py-14">
-              <ShopSkeleton />
+            <div className="content-wrap">
+              <LogoLoader label="Loading products" className="min-h-[70vh]" />
             </div>
           }
         >

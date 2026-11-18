@@ -78,3 +78,59 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* -------------------------------------------------------------------------
+   Logo loader animations (components/ui/LogoLoader.tsx, components/layout/PageLoader.tsx)
+   ------------------------------------------------------------------------- */
+@keyframes woodin-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes woodin-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+/* Safety net for the full-screen loader: if JavaScript never runs, it hides itself. */
+@keyframes woodin-autohide {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Reduced motion: no movement, but a loading indicator must still read as "working". The logo
+   and line fade in and out slowly instead of pulsing/sweeping. */
+@keyframes woodin-fade {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .woodin-logo {
+    animation: woodin-fade 2.4s ease-in-out infinite !important;
+    transform: none !important;
+  }
+  .woodin-sweep {
+    width: 100% !important;
+    animation: woodin-fade 2.4s ease-in-out infinite !important;
+    transform: none !important;
+  }
+}

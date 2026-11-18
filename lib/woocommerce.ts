@@ -51,7 +51,8 @@ async function getJson<T>(url: string): Promise<{ data: T; total: number; totalP
   try {
     res = await fetch(url, {
       headers: { Accept: "application/json", "User-Agent": "woodin-storefront" },
-      signal: AbortSignal.timeout(15_000),
+      // Cached server-side reads against a slow origin: be patient rather than fail the page.
+      signal: AbortSignal.timeout(45_000),
     });
   } catch {
     throw new WooError(502, `Could not reach ${new URL(url).host}`);
@@ -64,6 +65,10 @@ async function getJson<T>(url: string): Promise<{ data: T; total: number; totalP
     totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1),
   };
 }
+
+/** Only what the UI reads. Trims the Store API payload by ~40% (descriptions, attributes, links…). */
+const LIST_FIELDS = "id,name,slug,sku,permalink,short_description,prices,images,categories,is_in_stock,low_stock_remaining";
+const DETAIL_FIELDS = `${LIST_FIELDS},description`;
 
 const store = (path: string, query?: Query) => buildUrl("/wp-json/wc/store/v1", path, query);
 
@@ -98,6 +103,7 @@ export async function getProducts(query: ProductQuery = {}): Promise<ProductPage
         order: query.order,
         search: query.search,
         stock_status: query.inStock ? "instock" : undefined,
+        _fields: LIST_FIELDS,
       }),
     ),
     getCategories(),
@@ -112,7 +118,7 @@ export async function getProduct(slug: string): Promise<Product | null> {
   cacheTag("products", `product:${slug}`);
 
   const [{ data }, categories] = await Promise.all([
-    getJson<WCProduct[]>(store("/products", { slug })),
+    getJson<WCProduct[]>(store("/products", { slug, _fields: DETAIL_FIELDS })),
     getCategories(),
   ]);
   return data[0] ? normalizeProduct(data[0], categories) : null;
@@ -125,7 +131,7 @@ export async function getProductById(id: number): Promise<Product | null> {
 
   try {
     const [{ data }, categories] = await Promise.all([
-      getJson<WCProduct>(store(`/products/${id}`)),
+      getJson<WCProduct>(store(`/products/${id}`, { _fields: DETAIL_FIELDS })),
       getCategories(),
     ]);
     return normalizeProduct(data, categories);
