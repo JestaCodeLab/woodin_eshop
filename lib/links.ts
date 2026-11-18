@@ -18,7 +18,6 @@ export const SHOP_SECTIONS = [
   { key: "men", label: "Men", wcSlug: "mens-wear" },
   { key: "women", label: "Women", wcSlug: "ladies-wear" },
   { key: "fabrics", label: "Fabrics", wcSlug: "fabrics" },
-  { key: "accessories", label: "Accessories", wcSlug: "accessories" },
 ] as const;
 
 export type ShopSectionKey = (typeof SHOP_SECTIONS)[number]["key"];

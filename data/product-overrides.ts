@@ -94,7 +94,6 @@ export const DEMO_PRICE_BY_CATEGORY: Record<string, number> = {
   top: 200,
   "polo-shirts": 220,
   "polo-shirst": 220,
-  accessories: 90,
 };
 export const DEMO_PRICE_DEFAULT_RTW = 280;
 /** Fabrics are sold by the piece. [CONFIRM] length and price with Woodin. */

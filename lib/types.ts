@@ -109,7 +109,7 @@ export interface ProductImage {
   alt: string;
 }
 
-export type ProductKind = "rtw" | "fabric" | "accessory" | "other";
+export type ProductKind = "rtw" | "fabric" | "other";
 
 export interface Product {
   id: number;

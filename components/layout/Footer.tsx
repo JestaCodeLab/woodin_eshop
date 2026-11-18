@@ -11,7 +11,6 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Men", href: shopHref("men") },
       { label: "Women", href: shopHref("women") },
       { label: "Fabrics", href: shopHref("fabrics") },
-      { label: "Accessories", href: shopHref("accessories") },
     ],
   },
   {

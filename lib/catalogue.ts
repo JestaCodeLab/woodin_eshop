@@ -47,21 +47,16 @@ async function getAllInCategory(wcSlug: string): Promise<Product[]> {
 }
 
 /**
- * Products for a section. With no section: ready-to-wear first, then accessories, then
- * fabrics (374 of 448 products are fabrics and would otherwise bury the garments).
+ * Products for a section. With no section: ready-to-wear first, then fabrics (374 of 448 products are fabrics and would otherwise bury the garments).
  */
 export async function getSectionProducts(section?: ShopSectionKey): Promise<Product[]> {
   if (section) {
     const wc = SHOP_SECTIONS.find((s) => s.key === section)!.wcSlug;
     return getAllInCategory(wc);
   }
-  const [rtw, accessories, fabrics] = await Promise.all([
-    getAllInCategory("ready-to-wear"),
-    getAllInCategory("accessories"),
-    getAllInCategory("fabrics"),
-  ]);
+  const [rtw, fabrics] = await Promise.all([getAllInCategory("ready-to-wear"), getAllInCategory("fabrics")]);
   const seen = new Set<number>();
-  return [...rtw, ...accessories, ...fabrics].filter((p) => !seen.has(p.id) && seen.add(p.id));
+  return [...rtw, ...fabrics].filter((p) => !seen.has(p.id) && seen.add(p.id));
 }
 
 // ---------------------------------------------------------------------------
