@@ -163,3 +163,35 @@
 .leaflet-container {
   font-family: var(--font-text);
 }
+
+/* -------------------------------------------------------------------------
+   Mobile menu drawer (components/layout/MobileMenu.tsx, native <dialog>)
+   ------------------------------------------------------------------------- */
+@keyframes woodin-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes woodin-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+dialog.woodin-drawer[open] {
+  animation: woodin-drawer-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+dialog.woodin-drawer[open]::backdrop {
+  animation: woodin-backdrop-in 0.32s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.woodin-drawer[open],
+  dialog.woodin-drawer[open]::backdrop {
+    animation: none;
+  }
+}

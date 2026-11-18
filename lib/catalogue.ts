@@ -1,5 +1,4 @@
 import "server-only";
-import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { SHOP_SECTIONS, type ShopSectionKey } from "./links";
 import { getCategories, getProducts } from "./woocommerce";
@@ -18,16 +17,13 @@ import type { Product } from "./types";
 // ---------------------------------------------------------------------------
 
 /**
- * Every product in a WooCommerce category (all pages), cached.
+ * Every product in a WooCommerce category (all pages). Not itself cached: each page is cached
+ * individually by getProducts, and a cached function must not call other cached functions.
  * Page count comes from the cached category tree, so all pages are requested in ONE parallel
  * round (the origin is slow: two sequential rounds doubled the wait). If the tree is stale and
  * more pages exist, the remainder is fetched afterwards.
  */
 async function getAllInCategory(wcSlug: string): Promise<Product[]> {
-  "use cache";
-  cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
-  cacheTag("products");
-
   const categories = await getCategories();
   const expected = Math.max(1, Math.ceil((categories.find((c) => c.slug === wcSlug)?.count ?? 0) / 100));
   const pages = await Promise.all(

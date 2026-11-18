@@ -13,8 +13,7 @@ import type {
 /**
  * Read-only catalogue client for the WooCommerce Store API.
  *
- * Caching: every exported getter is a `'use cache'` function with a 300s revalidate window
- * (ISR). With Cache Components enabled this replaces `export const revalidate`.
+ * Caching: the raw fetches are `'use cache'` functions with a 300s revalidate window (ISR). With Cache Components enabled this replaces `export const revalidate`.
  * Tags: `products`, `product:<slug>`, `product-id:<id>`, `categories`.
  * The /api/revalidate webhook invalidates them when WooCommerce reports a change.
  *
@@ -74,8 +73,14 @@ const store = (path: string, query?: Query) => buildUrl("/wp-json/wc/store/v1", 
 
 // ---------------------------------------------------------------------------
 // Catalogue
+//
+// Layering rule (Next "use cache" deadlock): a cached function must NEVER call another cached
+// function. Concurrent callers would await each other's in-flight cache fills across scopes.
+// So the cached layer below only does raw fetches, and the public getters (not cached) combine
+// them with the cached category tree and normalise in memory, which costs microseconds.
 // ---------------------------------------------------------------------------
 
+/** Cached: the category tree. */
 export async function getCategories(): Promise<Category[]> {
   "use cache";
   cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
@@ -85,60 +90,73 @@ export async function getCategories(): Promise<Category[]> {
   return data.map(normalizeCategory);
 }
 
-export async function getProducts(query: ProductQuery = {}): Promise<ProductPage> {
+/** Cached: one raw page of products. */
+async function fetchProductsRaw(query: ProductQuery) {
   "use cache";
   cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
   cacheTag("products");
 
   const page = Math.max(1, query.page ?? 1);
   const perPage = Math.min(100, Math.max(1, query.perPage ?? 12));
-
-  const [{ data, total, totalPages }, categories] = await Promise.all([
-    getJson<WCProduct[]>(
-      store("/products", {
-        category: query.category,
-        page,
-        per_page: perPage,
-        orderby: query.orderby,
-        order: query.order,
-        search: query.search,
-        stock_status: query.inStock ? "instock" : undefined,
-        _fields: LIST_FIELDS,
-      }),
-    ),
-    getCategories(),
-  ]);
-
-  return { items: data.map((p) => normalizeProduct(p, categories)), total, totalPages, page, perPage };
+  const { data, total, totalPages } = await getJson<WCProduct[]>(
+    store("/products", {
+      category: query.category,
+      page,
+      per_page: perPage,
+      orderby: query.orderby,
+      order: query.order,
+      search: query.search,
+      stock_status: query.inStock ? "instock" : undefined,
+      _fields: LIST_FIELDS,
+    }),
+  );
+  return { data, total, totalPages, page, perPage };
 }
 
-export async function getProduct(slug: string): Promise<Product | null> {
+/** Cached: one raw product by slug. */
+async function fetchProductBySlugRaw(slug: string): Promise<WCProduct | null> {
   "use cache";
   cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
   cacheTag("products", `product:${slug}`);
 
-  const [{ data }, categories] = await Promise.all([
-    getJson<WCProduct[]>(store("/products", { slug, _fields: DETAIL_FIELDS })),
-    getCategories(),
-  ]);
-  return data[0] ? normalizeProduct(data[0], categories) : null;
+  const { data } = await getJson<WCProduct[]>(store("/products", { slug, _fields: DETAIL_FIELDS }));
+  return data[0] ?? null;
 }
 
-export async function getProductById(id: number): Promise<Product | null> {
+/** Cached: one raw product by id (null when it no longer exists). */
+async function fetchProductByIdRaw(id: number): Promise<WCProduct | null> {
   "use cache";
   cacheLife({ stale: 300, revalidate: 300, expire: 86400 });
   cacheTag("products", `product-id:${id}`);
 
   try {
-    const [{ data }, categories] = await Promise.all([
-      getJson<WCProduct>(store(`/products/${id}`, { _fields: DETAIL_FIELDS })),
-      getCategories(),
-    ]);
-    return normalizeProduct(data, categories);
+    const { data } = await getJson<WCProduct>(store(`/products/${id}`, { _fields: DETAIL_FIELDS }));
+    return data;
   } catch (e) {
     if (e instanceof WooError && e.status === 404) return null;
     throw e;
   }
+}
+
+export async function getProducts(query: ProductQuery = {}): Promise<ProductPage> {
+  const [raw, categories] = await Promise.all([fetchProductsRaw(query), getCategories()]);
+  return {
+    items: raw.data.map((p) => normalizeProduct(p, categories)),
+    total: raw.total,
+    totalPages: raw.totalPages,
+    page: raw.page,
+    perPage: raw.perPage,
+  };
+}
+
+export async function getProduct(slug: string): Promise<Product | null> {
+  const [raw, categories] = await Promise.all([fetchProductBySlugRaw(slug), getCategories()]);
+  return raw ? normalizeProduct(raw, categories) : null;
+}
+
+export async function getProductById(id: number): Promise<Product | null> {
+  const [raw, categories] = await Promise.all([fetchProductByIdRaw(id), getCategories()]);
+  return raw ? normalizeProduct(raw, categories) : null;
 }
 
 /** Other products from the same leaf category (the live catalogue has no "related" data). */
