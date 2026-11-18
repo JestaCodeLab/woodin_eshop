@@ -15,7 +15,7 @@ async function CheckoutContent() {
     <CheckoutFlow
       pickupStores={getStores().map(({ id, name, address }) => ({ id, name, address }))}
       payments={paymentsEnabled()}
-      deliveryOptions={deliveryOptions.map(({ id, name, short, eta, fee }) => ({ id, name, short, eta, fee }))}
+      deliveryOptions={deliveryOptions.map(({ id, name, short, eta, fee, freeEligible }) => ({ id, name, short, eta, fee, freeEligible }))}
       freeDeliveryThreshold={freeDeliveryThreshold()}
     />
   );
