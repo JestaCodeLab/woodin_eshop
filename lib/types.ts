@@ -1,5 +1,6 @@
 /** Normalised product shape the cards render (Home still feeds this from design data). */
 export interface ProductCardData {
+  id: number;
   slug: string;
   title: string;
   /** Category line, e.g. "Men · Shirts" */
@@ -12,6 +13,9 @@ export interface ProductCardData {
   swatches: string[];
   /** Formatted price, or undefined to show the [PRICE] placeholder */
   price?: string;
+  inStock: boolean;
+  /** Demo size availability for the quick-add picker; empty = add straight away (fabrics). */
+  sizes: SizeOption[];
   /** Model view shown on hover (fabrics only), see data/fabric-models.ts */
   hover?: { src: string; pos: string };
 }

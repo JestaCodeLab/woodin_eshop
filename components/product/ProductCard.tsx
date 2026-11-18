@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CoverImage } from "@/components/ui/CoverImage";
 import { PRICE_PLACEHOLDER } from "@/lib/placeholder";
 import type { ProductCardData } from "@/lib/types";
+import { QuickAdd } from "./QuickAdd";
 import { WishlistButton } from "./WishlistButton";
 
 interface ProductCardProps {
@@ -47,6 +48,7 @@ export function ProductCard({
           </span>
         ) : null}
         <WishlistButton title={title} />
+        <QuickAdd productId={product.id} title={title} inStock={product.inStock} sizes={product.sizes} />
       </div>
 
       <Link href={href} className="flex flex-col gap-1 text-ink no-underline">
