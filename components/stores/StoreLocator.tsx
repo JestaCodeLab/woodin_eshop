@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import type { Store } from "@/lib/stores";
 
@@ -39,10 +39,21 @@ const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 const chip = (on: boolean) =>
   `label-caps h-11 border px-5 tracking-[0.16em] ${on ? "border-brown bg-brown text-ivory" : "border-line-strong bg-transparent text-ink"}`;
 
-export function StoreLocator({ stores, initialId }: { stores: Store[]; initialId?: string }) {
+// `?store=<id>` is read in the browser (not via the page's searchParams) so the page itself
+// has no URL data and its shell stays static and instant.
+const subscribeToUrl = (notify: () => void) => {
+  window.addEventListener("popstate", notify);
+  return () => window.removeEventListener("popstate", notify);
+};
+const readStoreParam = () => new URLSearchParams(window.location.search).get("store");
+
+export function StoreLocator({ stores }: { stores: Store[] }) {
   const [query, setQuery] = useState("");
   const [region, setRegion] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(initialId && stores.some((s) => s.id === initialId) ? initialId : null);
+  const urlStore = useSyncExternalStore(subscribeToUrl, readStoreParam, () => null);
+  // What the visitor picked wins; until they pick, a valid ?store= from the URL is used.
+  const [picked, setSelectedId] = useState<string | null>(null);
+  const selectedId = picked ?? (urlStore && stores.some((s) => s.id === urlStore) ? urlStore : null);
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
   const [geo, setGeo] = useState<"idle" | "locating" | "denied" | "unsupported" | "empty">("idle");
 
