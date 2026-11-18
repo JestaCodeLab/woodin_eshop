@@ -2,18 +2,36 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useCart } from "@/components/cart/CartProvider";
 import { CoverImage } from "@/components/ui/CoverImage";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { formatMoney } from "@/lib/format";
 import { IMG } from "@/lib/images";
-import { PRICE_PLACEHOLDER } from "@/lib/placeholder";
-import type { LookItem } from "@/data/home";
 
-/**
- * "Shop the look": one campaign image, three pieces cropped from it, one add-all button.
- * TODO(step 3): "Add the full look" posts the three items to /api/cart/add-item as a batch.
- */
-export function ShopTheLook({ items }: { items: LookItem[] }) {
+export interface LookProduct {
+  id: number;
+  slug: string;
+  title: string;
+  category: string;
+  image: string;
+  price: number | null;
+  priceLabel: string;
+}
+
+/** "Shop the look": one campaign image, the real products worn in it, and one add-all button. */
+export function ShopTheLook({ items }: { items: LookProduct[] }) {
+  const { add, busy } = useCart();
   const [added, setAdded] = useState(false);
+  const total = items.every((i) => i.price !== null) ? items.reduce((n, i) => n + (i.price ?? 0), 0) : null;
+
+  async function addAll() {
+    // One at a time: each add rewrites the cart cookie, so parallel requests would overwrite each other.
+    for (const item of items) {
+      const next = await add({ productId: item.id, variation: [{ attribute: "Size", value: "M" }] });
+      if (!next) return;
+    }
+    setAdded(true);
+  }
 
   return (
     <section className="bg-sand">
@@ -34,30 +52,42 @@ export function ShopTheLook({ items }: { items: LookItem[] }) {
           </h2>
           <ul className="m-0 flex list-none flex-col border-t border-line-strong p-0">
             {items.map((item) => (
-              <li key={item.slug}>
+              <li key={item.id}>
                 <Link
                   href={`/product/${item.slug}`}
                   className="flex items-center gap-4 border-b border-line-strong py-3.5 text-ink no-underline"
                 >
-                  <span className="relative h-20 w-16 shrink-0 overflow-hidden">
-                    <CoverImage src={IMG.modelsSmiling} alt="" pos={item.pos} sizes="64px" />
+                  <span className="relative h-20 w-16 shrink-0 overflow-hidden bg-white">
+                    <CoverImage src={item.image} alt="" pos="50% 20%" sizes="64px" />
                   </span>
                   <span className="flex flex-1 flex-col gap-1">
                     <span className="font-display text-[19px]">{item.title}</span>
-                    <span className="text-[13px] text-muted">{item.cat}</span>
+                    <span className="text-[13px] text-muted">{item.category}</span>
                   </span>
-                  <span className="text-[15px]">{PRICE_PLACEHOLDER}</span>
+                  <span className="text-[15px]">{item.priceLabel}</span>
                 </Link>
               </li>
             ))}
           </ul>
           <button
             type="button"
-            onClick={() => setAdded(true)}
-            className="label-caps h-[58px] border-0 bg-brown text-ivory transition-colors hover:bg-[#3a1307]"
+            onClick={addAll}
+            disabled={busy || added}
+            className="label-caps h-[58px] border-0 bg-brown text-ivory transition-colors hover:bg-[#3a1307] disabled:bg-brown/80"
           >
-            {added ? "Added — 3 pieces in your bag" : "Add the full look · GH₵ [TOTAL]"}
+            {added
+              ? `Added — ${items.length} pieces in your bag`
+              : busy
+                ? "Adding…"
+                : `Add the full look · ${total === null ? "GH₵ [TOTAL]" : formatMoney(total, "GHS")}`}
           </button>
+          <p role="status" className="m-0 min-h-5 text-[13px] text-muted">
+            {added ? (
+              <>
+                Size M added. <Link href="/cart">View bag</Link>
+              </>
+            ) : null}
+          </p>
         </div>
       </div>
     </section>

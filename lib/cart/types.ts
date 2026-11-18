@@ -49,6 +49,8 @@ export interface CartBackend {
   update(input: { key: string; quantity: number }): Promise<Cart>;
   remove(input: { key: string }): Promise<Cart>;
   coupon(input: { code: string }): Promise<Cart>;
+  /** Empties the cart (after an order completes). */
+  clear(): Promise<Cart>;
 }
 
 export class CartError extends Error {

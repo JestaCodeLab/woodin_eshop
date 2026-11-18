@@ -6,6 +6,10 @@ const storeUrl = process.env.WC_STORE_URL ? new URL(process.env.WC_STORE_URL) : 
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // The WooCommerce origin is slow (~100KB/s); give the image optimizer longer than the 7s default.
+    imgOptTimeoutInSeconds: 30,
+  },
   images: {
     remotePatterns: storeUrl
       ? [

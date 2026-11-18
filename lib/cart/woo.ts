@@ -68,7 +68,7 @@ function toCart(c: WCCart): Cart {
   };
 }
 
-async function request(method: "GET" | "POST", path: string, body?: unknown): Promise<Cart> {
+async function request(method: "GET" | "POST" | "DELETE", path: string, body?: unknown): Promise<Cart> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
 
@@ -116,4 +116,5 @@ export const wooCart: CartBackend = {
     quantity === 0 ? request("POST", "/cart/remove-item", { key }) : request("POST", "/cart/update-item", { key, quantity }),
   remove: ({ key }) => request("POST", "/cart/remove-item", { key }),
   coupon: ({ code }) => request("POST", "/cart/apply-coupon", { code }),
+  clear: () => request("DELETE", "/cart/items"),
 };

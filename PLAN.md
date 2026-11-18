@@ -222,3 +222,19 @@ Dropped from this app (they live on the main site): `/ready-to-wear`, `/fabrics`
 ### Deployment
 
 Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `shop` → Vercel in the woodinfashion.com DNS), `WC_STORE_URL=https://woodinfashion.com`, `WC_ALLOW_CART_WRITES=false`.
+
+## 11. Final scope notes (after step 4 started)
+
+- **Strictly shopping.** No blog, Insights, Lookbook or Our Story anywhere in this app (no pages, teasers or footer links). Posts code (`wp/v2`) was removed.
+- **Header nav is exactly:** Men, Women, Fabrics, Stores. Stores links out to `woodinfashion.com/store-locator/`. Header also has Search (→ `/shop#search`) and the Bag. No wishlist/account icons (no backend).
+- **Fabrics are in the eshop** (374 of 448 products). `/shop` with no section lists ready-to-wear, then accessories, then fabrics.
+- **Shop filters** (URL): `cat` (men|women|fabrics|accessories), `type`, `q`, `min`, `max`, `stock`, `sort`, `page`. Size/colour facets are omitted (WooCommerce has no such data); the product page uses demo sizes (`lib/demo-stock.ts`).
+- **Checkout** runs the designed demo flow (details → delivery → payment → "check your phone" → thank you). Nothing is stored or sent; real payment hand-off is a later swap in `components/checkout/CheckoutFlow.tsx`.
+
+## 12. Design decisions made during step 4
+
+- **Display font:** DM Serif Display (replaces Bodoni Moda). Still behind `--font-display`; swap point is `--font-dm-serif` in `app/layout.tsx`.
+- **Layout:** full width, no max-width. Side padding is fluid: `--gutter: clamp(16px, 4.5vw, 96px)` (`content-wrap`).
+- **Home banner:** crossfading slider (4 slides, 6.5s auto-advance, side arrows, swipe). No pause button, dots, or pause-on-hover by request. Auto-advance is skipped for visitors who prefer reduced motion.
+- **Product cards:** image grows 5% on hover (`group-hover:scale-105`, 500ms; off for reduced motion).
+- **Images:** live-site photos use the WordPress-generated ~600px (cards) / ~300px (thumbs) variants, through Next's optimizer with a 30s timeout (the origin is slow).

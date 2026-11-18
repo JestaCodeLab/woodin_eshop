@@ -48,7 +48,7 @@ export function WorldCarousel({ cards }: { cards: WorldCard[] }) {
         role="group"
         aria-roledescription="carousel"
         aria-label="World of Woodin collections"
-        className="snap-x snap-mandatory overflow-x-auto pl-4 [scrollbar-width:none] md:snap-none md:overflow-hidden md:pl-[max(32px,calc((100%_-_1360px)/2_+_32px))] [&::-webkit-scrollbar]:hidden"
+        className="snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:snap-none md:overflow-hidden pl-[var(--gutter)] md:pl-[var(--gutter)] [&::-webkit-scrollbar]:hidden"
       >
         <ul
           className="m-0 flex list-none gap-5 p-0 pr-4 md:pr-0 md:transition-transform md:duration-[600ms] md:ease-[cubic-bezier(0.2,0.7,0.2,1)] md:[transform:translateX(var(--tx))]"

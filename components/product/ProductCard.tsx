@@ -22,11 +22,18 @@ export function ProductCard({
   const { title, cat, badge, swatches } = product;
 
   return (
-    <article className="flex flex-col gap-3 text-ink">
+    <article className="group flex flex-col gap-3 text-ink">
       <div className={`relative overflow-hidden bg-sand ${aspect}`}>
         {/* The text link below is the accessible one; this image link is a pointer convenience. */}
         <Link href={href} tabIndex={-1} aria-hidden="true" className="absolute inset-0 block">
-          <CoverImage src={product.image} alt="" pos={product.pos} sizes={sizes} priority={priority} />
+          <CoverImage
+            src={product.image}
+            alt=""
+            pos={product.pos}
+            sizes={sizes}
+            priority={priority}
+            className="transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
         </Link>
         {badge ? (
           <span className="absolute left-3 top-3 bg-ivory px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em]">

@@ -1,21 +1,14 @@
-import { FabricsBand } from "@/components/home/FabricsBand";
+import { Suspense } from "react";
 import { FeaturedLooks } from "@/components/home/FeaturedLooks";
 import { Hero } from "@/components/home/Hero";
-import { InsightsTeaser } from "@/components/home/InsightsTeaser";
-import { NewIn } from "@/components/home/NewIn";
+import { FabricsSection, NewInSection, ShopTheLookSection } from "@/components/home/HomeSections";
 import { ServicesRow } from "@/components/home/ServicesRow";
-import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { WearWoodin } from "@/components/home/WearWoodin";
 import { WorldCarousel } from "@/components/home/WorldCarousel";
-import {
-  FABRIC_PRINTS,
-  INSIGHT_TEASERS,
-  NEW_IN,
-  SERVICES,
-  SHOP_THE_LOOK,
-  WEAR_WOODIN_TILES,
-  WORLD_CARDS,
-} from "@/data/home";
+import { SERVICES, WEAR_WOODIN_TILES, WORLD_CARDS } from "@/data/home";
+
+/** Reserves space while a live section loads, so the page does not jump. */
+const Reserve = ({ h }: { h: string }) => <div aria-hidden="true" className={h} />;
 
 export default function HomePage() {
   return (
@@ -23,10 +16,15 @@ export default function HomePage() {
       <Hero />
       <WorldCarousel cards={WORLD_CARDS} />
       <FeaturedLooks />
-      <NewIn products={NEW_IN} />
-      <ShopTheLook items={SHOP_THE_LOOK} />
-      <FabricsBand prints={FABRIC_PRINTS} />
-      <InsightsTeaser posts={INSIGHT_TEASERS} />
+      <Suspense fallback={<Reserve h="h-[640px]" />}>
+        <NewInSection />
+      </Suspense>
+      <Suspense fallback={<Reserve h="h-[760px] bg-sand" />}>
+        <ShopTheLookSection />
+      </Suspense>
+      <Suspense fallback={<Reserve h="h-[560px] bg-brown" />}>
+        <FabricsSection />
+      </Suspense>
       <ServicesRow services={SERVICES} />
       <WearWoodin tiles={WEAR_WOODIN_TILES} />
     </main>

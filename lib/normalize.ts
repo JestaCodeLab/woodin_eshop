@@ -8,14 +8,12 @@ import {
 import { decodeEntities, formatMoney, stripHtml } from "./format";
 import type {
   Category,
-  Post,
   Price,
   Product,
   ProductCardData,
   ProductKind,
   WCCategory,
   WCProduct,
-  WPPost,
 } from "./types";
 
 /** Currency used for demo prices (data/product-overrides.ts). */
@@ -80,6 +78,18 @@ function categoryLabel(kind: ProductKind, leaf: Category | null, slugs: Set<stri
   return leaf?.name ?? "Woodin";
 }
 
+/** Smallest WordPress-generated size at least `min` px wide, else the original. */
+function pickVariant(srcset: string | undefined, min: number, fallback: string): string {
+  if (!srcset) return fallback;
+  const sizes = srcset
+    .split(",")
+    .map((part) => part.trim().split(/\s+/))
+    .map(([url, w]) => ({ url, width: parseInt(w ?? "", 10) }))
+    .filter((v) => v.url && Number.isFinite(v.width))
+    .sort((a, b) => a.width - b.width);
+  return sizes.find((v) => v.width >= min)?.url ?? fallback;
+}
+
 function resolvePrice(raw: WCProduct, kind: ProductKind, leaf: Category | null, override?: number): Price {
   const minor = raw.prices?.currency_minor_unit ?? 2;
   const wc = Number(raw.prices?.price ?? 0) / 10 ** minor;
@@ -134,7 +144,12 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
     categories: refs,
     leafCategory: leaf,
     price: resolvePrice(raw, kind, leaf, override?.price),
-    images: raw.images.map((i) => ({ src: i.src, alt: i.alt || title })),
+    images: raw.images.map((i) => ({
+      src: i.src,
+      card: pickVariant(i.srcset, 600, i.src),
+      thumb: pickVariant(i.srcset, 300, i.src),
+      alt: i.alt || title,
+    })),
     inStock: raw.is_in_stock,
     lowStock: raw.low_stock_remaining,
     description: stripHtml(raw.description ?? ""),
@@ -152,25 +167,9 @@ export function toCardData(p: Product): ProductCardData {
     title: p.title,
     cat: p.categoryLabel,
     badge: p.badge,
-    image: p.images[0]?.src ?? "",
+    image: p.images[0]?.card ?? "",
     pos: p.pos,
     swatches: [],
     price: p.price.amount === null ? undefined : p.price.formatted,
-  };
-}
-
-export function normalizePost(raw: WPPost, withContent = false): Post {
-  const media = raw._embedded?.["wp:featuredmedia"]?.[0];
-  const terms = raw._embedded?.["wp:term"]?.[0] ?? [];
-  const title = decodeEntities(raw.title.rendered);
-  return {
-    id: raw.id,
-    slug: raw.slug,
-    title,
-    excerpt: stripHtml(raw.excerpt?.rendered ?? ""),
-    contentHtml: withContent ? raw.content?.rendered : undefined,
-    date: raw.date,
-    image: media ? { src: media.source_url, alt: media.alt_text || title } : null,
-    categories: terms.map((t) => ({ id: t.id, slug: t.slug, name: decodeEntities(t.name) })),
   };
 }
