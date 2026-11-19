@@ -10,7 +10,8 @@ export type SmsEvent =
   | { type: "shipped"; order: string; tracking?: string }
   | { type: "ready"; order: string; store?: string }
   | { type: "delivered"; order: string; pickup: boolean }
-  | { type: "refund"; order: string; amount: string };
+  | { type: "refund"; order: string; amount: string }
+  | { type: "cancelled"; order: string };
 
 const clean = (s: string) => s.replace(/[^\x20-\x7E]/g, "").replace(/\s+/g, " ").trim();
 
@@ -26,5 +27,7 @@ export function smsText(e: SmsEvent): string {
       return `Woodin: Order #${e.order} has been ${e.pickup ? "collected" : "delivered"}. Thank you for shopping with Woodin!`;
     case "refund":
       return `Woodin: A refund of GHS ${e.amount} for order #${e.order} has been processed. Contact us if you have any questions.`;
+    case "cancelled":
+      return `Woodin: Order #${e.order} has been cancelled. If you did not ask for this, please contact us.`;
   }
 }

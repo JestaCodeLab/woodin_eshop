@@ -35,11 +35,13 @@ export function dueEvents(order: WCOrder, only?: SmsEvent["type"][]): { key: str
   if (order.status === "processing" || order.status === "shipped" || order.status === "completed") {
     add("paid", { type: "paid", first: order.billing?.first_name ?? "", order: n, total: Number(order.total).toFixed(2) });
   }
-  if (!pickup && (order.status === "shipped" || (order.status === "processing" && tracking))) {
+  if (!pickup && order.status === "shipped") {
     add(`shipped:${tracking ?? "-"}`, { type: "shipped", order: n, tracking });
   }
   if (pickup && order.status === "ready-collection") add("ready", { type: "ready", order: n, store: storeOf(order) });
   if (order.status === "completed") add("delivered", { type: "delivered", order: n, pickup });
+  // Only paid orders: an unpaid order that WooCommerce cancels on its own should not text the customer.
+  if (order.status === "cancelled" && order.date_paid_gmt) add("cancelled", { type: "cancelled", order: n });
   for (const r of order.refunds ?? []) {
     add(`refund:${r.id}`, { type: "refund", order: n, amount: Math.abs(Number(r.total) || 0).toFixed(2) });
   }
