@@ -53,20 +53,19 @@ export function buildTrackingView(order: WCOrder): TrackingView {
   const cancelled = status === "cancelled" || status === "failed";
   const refundedTotal = (order.refunds ?? []).reduce((n, r) => n + Math.abs(Number(r.total) || 0), 0);
 
-  // Where the order is on the line: 0 placed, 1 paid, 2 on its way / ready, 3 delivered / collected.
-  let at = 0;
-  if (status === "on-hold") at = 1;
-  else if (status === "processing") at = number && !pickup ? 2 : 1;
-  else if (status === "shipped" || status === "ready-collection") at = 2;
-  else if (status === "completed" || status === "refunded") at = 3;
-  // "current" is the step being worked on, so the next one after the last completed.
-  const done = status === "completed" || status === "refunded" ? 4 : status === "pending" ? 1 : at + 1;
+  // How many steps are finished; the next one is "current". Strictly follows the WooCommerce status:
+  // pending -> placed | on-hold -> placed (under review) | processing -> placed + paid |
+  // shipped / ready-collection -> + processing | completed / refunded -> everything.
+  let done = 1;
+  if (status === "processing") done = 2;
+  else if (status === "shipped" || status === "ready-collection") done = 3;
+  else if (status === "completed" || status === "refunded") done = 5;
 
   const labels = pickup
-    ? ["Order placed", "Payment received", "Ready for collection", "Collected"]
-    : ["Order placed", "Payment received", "Shipped with Ghana Post", "Delivered"];
+    ? ["Order placed", "Payment received", "Order processing", "Ready for collection", "Collected"]
+    : ["Order placed", "Payment received", "Order processing", "Shipped with Ghana Post", "Delivered"];
   const steps: TrackingStep[] = labels.map((label, i) => ({
-    key: ["placed", "paid", "dispatch", "final"][i],
+    key: ["placed", "paid", "processing", "dispatch", "final"][i],
     label,
     state: i < done ? "done" : i === done ? "current" : "todo",
   }));
@@ -74,7 +73,7 @@ export function buildTrackingView(order: WCOrder): TrackingView {
   const notes: Record<string, [string, string]> = {
     pending: ["Awaiting payment", "We have not received your payment yet."],
     "on-hold": ["Being reviewed", "We are checking your order and will be in touch shortly."],
-    processing: number && !pickup ? ["On its way", "Your parcel has been handed to Ghana Post."] : ["Preparing your order", pickup ? "We are getting your order ready for collection." : "We are packing your order for dispatch."],
+    processing: ["Order processing", pickup ? "We are getting your order ready for collection." : "We are packing your order for dispatch."],
     shipped: ["On its way", "Your parcel has been handed to Ghana Post."],
     "ready-collection": ["Ready for collection", "Your order is ready. Bring your order number when you collect."],
     completed: [pickup ? "Collected" : "Delivered", pickup ? "Thank you for collecting your order." : "Your order has been delivered. Thank you for shopping with Woodin."],
