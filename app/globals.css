@@ -166,3 +166,25 @@ dialog.woodin-drawer[open]::backdrop {
     animation: none;
   }
 }
+
+/* Order tracking: the step in progress shows an indeterminate loading bar. */
+@keyframes woodin-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.track-progress {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-line);
+}
+.track-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--color-brown);
+  animation: woodin-progress 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .track-progress::after { width: 100%; animation: none; }
+}

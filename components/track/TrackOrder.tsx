@@ -96,7 +96,7 @@ function Result({ view }: { view: TrackingView }) {
         <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-5">
           {view.steps.map((s, i) => (
             <li key={s.key} aria-current={s.state === "current" ? "step" : undefined} className="flex flex-col gap-2">
-              <span className={`h-1 ${s.state === "done" ? "bg-instock-dot" : s.state === "current" ? "bg-brown" : "bg-line"}`} />
+              <span className={`h-1 ${s.state === "done" ? "bg-instock-dot" : s.state === "current" ? "track-progress" : "bg-line"}`} />
               <span className={`text-[13px] ${s.state === "todo" ? "text-muted" : "font-medium text-ink"}`}>
                 <span className="sr-only">Step {i + 1}: </span>
                 {s.label}
