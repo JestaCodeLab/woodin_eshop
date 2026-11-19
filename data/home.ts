@@ -6,7 +6,8 @@ import { IMG } from "@/lib/images";
  */
 
 /** Live products used in "Shop the look" (men's polos worn in the campaign image). Missing ids are skipped. */
-export const SHOP_THE_LOOK_IDS = [2962, 2951, 2964];
+/** WooCommerce ids on cms.woodinfashion.store (SKUs RTW-Shirt-08-2-1-1, RTW-Shirt-08-2-1, RTW-Shirt-08-2-1-3). */
+export const SHOP_THE_LOOK_IDS = [313, 312, 315];
 
 export const SERVICES = [
   { icon: "pay", title: "Pay your way", body: "MTN MoMo, Telecel Cash, AT Money or card, secured by Paystack." },
