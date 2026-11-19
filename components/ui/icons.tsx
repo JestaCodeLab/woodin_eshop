@@ -91,3 +91,31 @@ export const CloseIcon = (p: IconProps) => (
     <path d="M6 6l12 12M18 6L6 18" />
   </Icon>
 );
+
+export const WalletIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v3" />
+    <rect x="3" y="7.5" width="18" height="12" rx="1" />
+    <path d="M16 13.5h5v3h-5a1.5 1.5 0 0 1 0-3Z" />
+  </Icon>
+);
+
+export const TruckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2.5 6.5h11v10h-11zM13.5 10h4l3 3v3.5h-7" />
+    <circle cx="7" cy="17.5" r="1.8" />
+    <circle cx="17" cy="17.5" r="1.8" />
+  </Icon>
+);
+
+export const StoreIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20" />
+  </Icon>
+);
+
+export const ExchangeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 9h14l-3-3M20 15H6l3 3" />
+  </Icon>
+);
