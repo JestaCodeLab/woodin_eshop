@@ -501,7 +501,7 @@ export function CheckoutFlow({
             <span className="label-caps tracking-[0.18em]">Total</span>
             <span className="font-display text-[32px]">{money(total)}</span>
           </div>
-          <Link href="/cart" className="p-2 text-center text-[13px]">Edit bag</Link>
+          <Button href="/cart" variant="outline" size="lg" className="w-full">Edit bag</Button>
         </aside>
       </section>
     </>

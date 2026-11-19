@@ -93,7 +93,7 @@ export async function getDeliveryOptions(): Promise<DeliveryOption[]> {
   const pickup = zones.find((z) => z.pickup !== null);
   if (pickup) {
     const store = ZONES.find((z) => z.id === "store")!;
-    options.push({ id: "store", name: store.name, short: store.short, eta: store.eta, fee: pickup.pickup, freeEligible: false, demo: false });
+    options.push({ id: "store", name: store.name, short: store.short, eta: process.env.PICKUP_READY_TEXT?.trim() || "Ready for collection in store", fee: pickup.pickup, freeEligible: false, demo: false });
   }
   return options.length > 0 ? options : fallback(true);
 }
