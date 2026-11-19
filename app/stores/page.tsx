@@ -46,7 +46,7 @@ export default function StoresPage() {
             <h2 className="m-0 font-display text-[clamp(34px,5vw,54px)] font-normal leading-[1.05]">
               Order online, <span className="italic">collect in store</span>
             </h2>
-            <p className="m-0 text-base font-light">Free click &amp; collect at every Woodin store. Ready in [X] hours.</p>
+            <p className="m-0 text-[19px] font-light">Free click &amp; collect at every Woodin store. Ready in [X] hours.</p>
             <Button href="/shop" variant="ivory" className="px-[34px] py-[18px]">
               Start shopping
             </Button>

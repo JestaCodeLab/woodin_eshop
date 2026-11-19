@@ -14,7 +14,7 @@ export function ServicesRow({ services }: { services: readonly { icon: keyof typ
                 <Icon size={26} className="shrink-0 text-brown" />
                 {s.title}
               </span>
-              <span className="text-sm font-light leading-[1.6] text-muted">{s.body}</span>
+              <span className="text-[17px] font-light leading-[1.6] text-muted">{s.body}</span>
             </li>
           );
         })}

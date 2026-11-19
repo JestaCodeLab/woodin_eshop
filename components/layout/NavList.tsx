@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { isExternal, shopHref } from "@/lib/links";
 
-export type NavKey = "men" | "women" | "fabrics" | "stores";
+export type NavKey = "men" | "women" | "fabrics" | "insights" | "stores";
 
-/** Eshop header nav: exactly these four. */
+/** Eshop header nav. */
 export const NAV_ITEMS: { key: NavKey; label: string; href: string }[] = [
   { key: "men", label: "Men", href: shopHref("men") },
   { key: "women", label: "Women", href: shopHref("women") },
   { key: "fabrics", label: "Fabrics", href: shopHref("fabrics") },
+  { key: "insights", label: "Insights", href: "/insights" },
   { key: "stores", label: "Stores", href: "/stores" },
 ];
 

@@ -128,7 +128,7 @@ export function ConfirmationView() {
         <h1 className="m-0 font-display text-[clamp(40px,5vw,62px)] font-normal leading-none text-brown">
           <span className="italic">Thank you.</span>
         </h1>
-        <p className="m-0 text-base font-light leading-[1.7] text-body" role="status">
+        <p className="m-0 text-[19px] font-light leading-[1.7] text-body" role="status">
           Your order <strong className="font-medium">#{orderNumber}</strong> is confirmed and paid. We have sent your receipt by email.
         </p>
         <dl className="m-0 flex flex-col gap-2.5 border-y border-line py-4 text-[15px] font-light">
@@ -150,7 +150,7 @@ function Message({ title, body, children }: { title: string; body: string; child
   return (
     <section className="mx-auto flex max-w-[640px] flex-col items-center gap-5 px-4 pb-28 pt-24 text-center">
       <h1 className="m-0 font-display text-[clamp(34px,5vw,48px)] font-normal leading-none text-brown">{title}</h1>
-      <p className="m-0 text-base font-light leading-[1.7] text-body" role="status">{body}</p>
+      <p className="m-0 text-[19px] font-light leading-[1.7] text-body" role="status">{body}</p>
       <div className="flex flex-wrap justify-center gap-3">{children}</div>
     </section>
   );

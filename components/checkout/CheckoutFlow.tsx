@@ -281,7 +281,7 @@ export function CheckoutFlow({
             </svg>
           </span>
           <h1 className="m-0 font-display text-[clamp(34px,6vw,52px)] font-normal leading-none">Complete your payment</h1>
-          <p className="m-0 text-[17px] font-light leading-[1.7] text-body" role="status">
+          <p className="m-0 text-[19px] font-light leading-[1.7] text-body" role="status">
             {payError ?? "Pay in the secure Paystack window. For Mobile Money, approve the prompt on your phone. This page updates by itself."}
           </p>
           <Button onClick={() => void openPaystack(attempt)} variant="primary" size="lg" className="px-[34px]">
@@ -314,7 +314,7 @@ export function CheckoutFlow({
             </svg>
           </span>
           <h1 className="m-0 font-display text-[clamp(38px,6vw,58px)] font-normal leading-none">Check your phone</h1>
-          <p className="m-0 text-[17px] font-light leading-[1.7] text-body" role="status">
+          <p className="m-0 text-[19px] font-light leading-[1.7] text-body" role="status">
             We sent a {method.short} prompt to {phone}. Enter your PIN to pay {money(total)} to Woodin.
           </p>
           <Button onClick={() => void finish()} variant="primary" size="lg" className="px-[34px]">
@@ -341,7 +341,7 @@ export function CheckoutFlow({
             <h1 className="m-0 font-display text-[clamp(40px,5vw,62px)] font-normal leading-none text-brown">
               Merci. <span className="italic">Thank you.</span>
             </h1>
-            <p className="m-0 text-base font-light leading-[1.7] text-body" role="status">
+            <p className="m-0 text-[19px] font-light leading-[1.7] text-body" role="status">
               Your order #WD-[NUMBER] is confirmed. We will send your receipt by SMS and email once payments go live. This is a demo order, so nothing was charged.
             </p>
             <dl className="m-0 flex flex-col gap-2.5 border-y border-line py-4 text-[15px] font-light">

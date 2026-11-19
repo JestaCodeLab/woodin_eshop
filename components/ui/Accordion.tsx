@@ -33,7 +33,7 @@ export function Accordion({ items, defaultOpen = 0 }: { items: AccordionItem[]; 
               </button>
             </h3>
             <div id={`${uid}-p${i}`} role="region" aria-labelledby={`${uid}-h${i}`} hidden={!isOpen}>
-              <p className="m-0 mb-[18px] text-[15px] font-light leading-[1.7] text-body">{item.body}</p>
+              <p className="m-0 mb-[18px] text-[19px] font-light leading-[1.7] text-body">{item.body}</p>
             </div>
           </div>
         );

@@ -18,11 +18,11 @@ export function AppliedFilters({ params, types }: { params: ShopParams; types: T
   return (
     <div className="flex min-h-11 flex-wrap items-center gap-2">
       {chips.map((c) => (
-        <Link key={c.label} href={c.href} aria-label={`Remove filter ${c.label}`} className="flex h-10 items-center border border-brown bg-white px-3.5 text-[13px] text-brown no-underline">
+        <Link key={c.label} href={c.href} aria-label={`Remove filter ${c.label}`} className="flex h-10 items-center border border-brown bg-white px-3.5 text-[15px] text-brown no-underline">
           {c.label} <span aria-hidden="true" className="ml-2">✕</span>
         </Link>
       ))}
-      <Link href={clearAll} className="flex h-11 items-center px-2 text-[13px] text-ink underline">
+      <Link href={clearAll} className="flex h-11 items-center px-2 text-[15px] text-ink underline">
         Clear all
       </Link>
     </div>
