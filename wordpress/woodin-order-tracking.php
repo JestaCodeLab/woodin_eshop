@@ -89,8 +89,8 @@ add_action('woocommerce_process_shop_order_meta', function ($order_id) {
 }, 10, 1);
 
 /**
- * 3. Customer email when an order moves to "Shipped" or "Ready for collection".
- * WooCommerce only emails for its built-in statuses (Processing, Completed, ...), so these two need their own.
+ * 3. Customer email when an order moves to "Shipped", "Ready for collection" or "Cancelled".
+ * WooCommerce emails customers for Processing, On hold, Completed and Refunded, but not for these three.
  * The SMS goes out separately through the eshop webhook. Optional: define('WOODIN_TRACK_URL', 'https://your-eshop/track')
  * in wp-config.php to change the tracking page link.
  */
@@ -110,7 +110,13 @@ function woodin_send_status_email($order_id, $kind)
     $track   = defined('WOODIN_TRACK_URL') ? WOODIN_TRACK_URL : 'https://www.woodinfashion.store/track';
     $code    = trim((string) $order->get_meta('woodin_tracking_number'));
 
-    if ($kind === 'shipped') {
+    if ($kind === 'cancelled') {
+        if (!$order->get_date_paid()) {
+            return; // never paid (e.g. auto-cancelled unpaid order): do not email
+        }
+        $subject = "Your Woodin order #$number was cancelled";
+        $lines   = ["Hello $name. Your order #$number has been cancelled. If you did not ask for this, please contact us."];
+    } elseif ($kind === 'shipped') {
         $subject = "Your Woodin order #$number has shipped";
         $lines   = ["Good news, $name. Your order #$number has been handed to Ghana Post."];
         if ($code !== '') {
@@ -120,7 +126,9 @@ function woodin_send_status_email($order_id, $kind)
         $subject = "Your Woodin order #$number is ready for collection";
         $lines   = ["Good news, $name. Your order #$number is ready for collection in store. Please bring your order number."];
     }
-    $lines[] = "Follow your order any time: $track";
+    if ($kind !== 'cancelled') {
+        $lines[] = "Follow your order any time: $track";
+    }
     $lines[] = "Thank you for shopping with Woodin.";
 
     wp_mail($order->get_billing_email(), $subject, implode("\n\n", $lines));
@@ -132,4 +140,7 @@ add_action('woocommerce_order_status_shipped', function ($order_id) {
 }, 20);
 add_action('woocommerce_order_status_ready-collection', function ($order_id) {
     woodin_send_status_email($order_id, 'ready');
+}, 20);
+add_action('woocommerce_order_status_cancelled', function ($order_id) {
+    woodin_send_status_email($order_id, 'cancelled');
 }, 20);

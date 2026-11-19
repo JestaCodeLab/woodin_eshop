@@ -73,6 +73,7 @@ export interface WCOrder {
   currency: string;
   total: string;
   date_created_gmt?: string;
+  date_paid_gmt?: string | null;
   meta_data: { id?: number; key: string; value: unknown }[];
   billing?: { first_name?: string; last_name?: string; email?: string; phone?: string };
   line_items?: { name: string; quantity: number }[];
