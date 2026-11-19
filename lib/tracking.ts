@@ -63,7 +63,7 @@ export function buildTrackingView(order: WCOrder): TrackingView {
 
   const labels = pickup
     ? ["Order placed", "Payment received", "Order processing", "Ready for collection", "Collected"]
-    : ["Order placed", "Payment received", "Order processing", "Shipped with Ghana Post", "Delivered"];
+    : ["Order placed", "Payment received", "Order processing", "Shipped", "Delivered"];
   const steps: TrackingStep[] = labels.map((label, i) => ({
     key: ["placed", "paid", "processing", "dispatch", "final"][i],
     label,
