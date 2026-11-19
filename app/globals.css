@@ -136,35 +136,6 @@
 }
 
 /* -------------------------------------------------------------------------
-   Store locator map pins (Leaflet divIcon, components/stores/StoreMap.tsx)
-   ------------------------------------------------------------------------- */
-.woodin-pin {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: var(--color-ivory);
-  border: 1px solid var(--color-brown);
-  box-shadow: 0 2px 8px rgba(26, 18, 14, 0.25);
-  transition: transform 0.2s;
-}
-/* Leaflet forces `width: auto` on marker-pane images with a higher-specificity selector. */
-.leaflet-container .woodin-pin img {
-  width: 60% !important;
-  max-width: 60% !important;
-  height: auto !important;
-}
-.woodin-pin[data-selected="true"] {
-  background: var(--color-brown);
-}
-.leaflet-container .woodin-pin[data-selected="true"] img {
-  filter: brightness(0) invert(1);
-}
-.leaflet-container {
-  font-family: var(--font-text);
-}
-
-/* -------------------------------------------------------------------------
    Mobile menu drawer (components/layout/MobileMenu.tsx, native <dialog>)
    ------------------------------------------------------------------------- */
 @keyframes woodin-drawer-in {

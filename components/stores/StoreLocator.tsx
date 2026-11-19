@@ -1,15 +1,10 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/Button";
 import type { Store } from "@/lib/stores";
 
-// Leaflet touches `window`, so the map is client-only and code-split away from every other page.
-const StoreMap = dynamic(() => import("./StoreMap").then((m) => m.StoreMap), {
-  ssr: false,
-  loading: () => <div aria-hidden="true" className="h-[340px] w-full animate-pulse bg-sand md:h-[440px]" />,
-});
+import { StoreMap } from "./StoreMap";
 
 type Located = Store & { lat: number; lng: number };
 const hasCoords = (s: Store): s is Located => s.lat !== undefined && s.lng !== undefined;
@@ -30,6 +25,7 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 
 function directionsUrl(s: Store): string {
   if (s.directionsUrl) return s.directionsUrl;
+  if (s.mapQuery) return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.mapQuery)}`;
   if (hasCoords(s)) return `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.name} ${s.address}`)}`;
 }
@@ -59,7 +55,6 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
 
   const regions = useMemo(() => [...new Set(stores.map((s) => s.region).filter((r): r is string => !!r))], [stores]);
   const filtersOn = stores.length > FILTER_THRESHOLD;
-  const canLocate = stores.some(hasCoords);
 
   const visible = useMemo(() => {
     const q = norm(query.trim());
@@ -72,7 +67,6 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
   }, [stores, query, region, here]);
 
   const selected = visible.find((v) => v.store.id === selectedId)?.store ?? visible[0]?.store ?? null;
-  const located = visible.map((v) => v.store).filter(hasCoords);
 
   function locate() {
     if (!("geolocation" in navigator)) return setGeo("unsupported");
@@ -82,7 +76,6 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
         // Used only in this browser to sort by distance. Nothing is sent anywhere.
         setHere({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGeo("idle");
-        setSelectedId(null);
       },
       () => setGeo("denied"),
       { timeout: 10_000, maximumAge: 300_000 },
@@ -90,7 +83,7 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
   }
 
   const geoMessage =
-    geo === "locating" ? "Finding your location…" : geo === "denied" ? "We could not get your location. Allow location access, or pick a store from the list." : geo === "unsupported" ? "Your browser can't share its location." : here ? "Sorted by distance from you." : "";
+    geo === "locating" ? "Finding your location…" : geo === "denied" ? "We could not get your location. Allow location access in your browser and try again." : geo === "unsupported" ? "Your browser can't share its location." : here ? "Showing the route from your location." : "";
 
   return (
     <>
@@ -116,19 +109,6 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
               />
             </>
           ) : null}
-          {canLocate ? (
-            <button
-              type="button"
-              onClick={locate}
-              disabled={geo === "locating"}
-              className="h-11 self-start border-0 bg-transparent p-0 text-sm text-ink underline"
-            >
-              Use my location
-            </button>
-          ) : null}
-          <p role="status" className="m-0 min-h-5 text-[13px] text-muted">
-            {geoMessage}
-          </p>
         </div>
       </section>
 
@@ -190,7 +170,23 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
         </div>
 
         <div className="flex min-w-0 flex-[1.6_1_520px] flex-col border border-line bg-white">
-          {located.length > 0 ? <StoreMap stores={located} selectedId={selected?.id ?? null} onSelect={setSelectedId} /> : null}
+          {selected ? (
+            <div className="relative">
+              <StoreMap store={selected} origin={here} />
+              {/* Top right of the map, left of Google's own fullscreen control. */}
+              <button
+                type="button"
+                onClick={locate}
+                disabled={geo === "locating"}
+                className="label-caps absolute right-14 top-3 h-10 border border-brown bg-white/95 px-4 tracking-[0.14em] text-brown shadow-sm transition-colors hover:bg-brown hover:text-ivory disabled:opacity-60"
+              >
+                {geo === "locating" ? "Locating…" : "Use my location"}
+              </button>
+            </div>
+          ) : null}
+          <p role="status" className="m-0 border-b border-line px-6 py-2 text-[13px] text-muted empty:hidden md:px-7">
+            {geoMessage}
+          </p>
 
           {selected ? (
             <div className="flex flex-wrap gap-7 p-6 md:p-7">
