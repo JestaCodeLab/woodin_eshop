@@ -274,3 +274,14 @@ Flow: checkout form -> `POST /api/checkout/start` (server recomputes the total f
 - **Safety:** demo prices are refused with a live Paystack key; orders carry `woodin_demo_prices` meta when demo-priced; one pending order per browser (the previous unpaid one is cancelled); same-origin JSON checks on all browser POSTs.
 - **Live-site quirk:** the live host answers `/wp-json/wc/v3/*` with "no route", so the orders client uses `/?rest_route=/wc/v3/*`.
 - **Not verified yet:** a real payment in the Paystack popup (card and Mobile Money) and the live webhook.
+
+## 17. Order tracking and customer SMS (FlockText)
+
+- **Carrier:** Ghana Post for every delivery. Shop managers update orders by hand in WordPress (for now). A tracking API / link template comes later (`TRACKING_URL_TEMPLATE`, with `{number}`).
+- **`/track`** (noindex): order number + billing email -> progress steps (Order placed, Payment received, Shipped with Ghana Post / Ready for collection, Delivered / Collected), Ghana Post tracking number, items, refunds. Wrong number, wrong email and non-eshop orders return the same "not found"; 12 attempts / 10 min / IP per server instance.
+- **WordPress side:** `wordpress/woodin-order-tracking.php` (upload to `wp-content/mu-plugins/`) adds the statuses **Shipped** and **Ready for collection** and a **Ghana Post tracking number** box on each order. UNTESTED on the live site: try on a copy first.
+- **SMS (customers only), via the FlockText API** (`lib/sms/flocktext.ts`, `POST https://api.flocktext.com/api/v1/messages/send`, Bearer key; same organisation/wallet as the FlockText WordPress plugin). Texts: payment received (sent by checkout), shipped (+ tracking number), ready for collection, delivered/collected, refund (amount). GSM-safe wording ("GHS 215.00", no ₵) to stay within one SMS.
+- **Triggers:** payment text is sent when the order is marked paid; everything a shop manager does in WordPress reaches us through a WooCommerce **"Order updated" webhook** -> `POST /api/woocommerce/webhook` (HMAC-SHA256, secret `WC_WEBHOOK_SECRET`, falls back to `REVALIDATE_SECRET`). Only orders with meta `woodin_eshop=1`.
+- **No duplicates:** each sent text is recorded on the order (meta `woodin_sms_sent`); a failed send (no credits, bad number) is not recorded, so it is retried the next time the order changes. No automatic retry (could double-text). If the FlockText WordPress plugin also has its own WooCommerce order notifications, turn those off.
+- **Limits:** FlockText allows 100 requests / 15 min per organisation (shared with the plugin).
+- **Config:** `SMS_PROVIDER` (`log` = dry run, default; `flocktext`), `FLOCKTEXT_API_KEY`, optional `FLOCKTEXT_SENDER_ID`, `WC_WEBHOOK_SECRET`, `TRACKING_URL_TEMPLATE`.

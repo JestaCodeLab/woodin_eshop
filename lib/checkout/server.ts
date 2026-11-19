@@ -6,6 +6,7 @@ import { freeDeliveryThreshold } from "@/lib/config";
 import { getDeliveryOptions, type DeliveryOption } from "@/lib/delivery";
 import { PICKUP_ZONE_LABEL } from "@/lib/checkout-config";
 import { addOrderNote, createOrder, getOrder, updateOrder, type NewOrder } from "@/lib/orders";
+import { notifyOrder } from "@/lib/sms/orders";
 import { initializeTransaction, verifyTransaction } from "@/lib/paystack";
 import { isLivePaystackKey, paystackChannels } from "@/lib/payments-config";
 import { SITE_URL } from "@/lib/site";
@@ -205,8 +206,10 @@ export async function finalizeByReference(reference: string): Promise<FinalizeRe
     return { status: "review", ...summary };
   }
 
-  await updateOrder(orderId, { status: "processing", set_paid: true, transaction_id: String(tx.id) });
+  const paid = await updateOrder(orderId, { status: "processing", set_paid: true, transaction_id: String(tx.id) });
   await addOrderNote(orderId, `Paid with Paystack. Reference ${reference}, transaction ${tx.id}.`).catch(() => undefined);
+  // "Payment received" text to the customer (best effort: never fails the payment).
+  await notifyOrder({ ...order, ...paid, billing: paid.billing ?? order.billing, meta_data: paid.meta_data ?? order.meta_data }, ["paid"]);
   return { status: "paid", ...summary };
 }
 

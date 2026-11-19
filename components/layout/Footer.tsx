@@ -18,7 +18,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     // TODO: point at the real help pages once Woodin has them (see TODO.md).
     title: "Help",
     links: [
-      { label: "Track your order", href: "#" },
+      { label: "Track your order", href: "/track" },
       { label: "Delivery & returns", href: "#" },
       { label: "Size guide", href: "#" },
       { label: "FAQs", href: "#" },
