@@ -9,11 +9,11 @@ import { IMG } from "@/lib/images";
 export const SHOP_THE_LOOK_IDS = [2962, 2951, 2964];
 
 export const SERVICES = [
-  { title: "Pay your way", body: "MTN MoMo, Telecel Cash, AT Money or card, secured by Paystack." },
-  { title: "Delivery across Ghana", body: "Accra in [X] days, other regions in [X] days." },
-  { title: "Click & collect", body: "Order online and collect free at a Woodin store." },
-  { title: "Easy exchanges", body: "Wrong size? Exchange within [X] days, in store or by courier." },
-];
+  { icon: "pay", title: "Pay your way", body: "MTN MoMo, Telecel Cash, AT Money or card, secured by Paystack." },
+  { icon: "delivery", title: "Delivery across Ghana", body: "Fast delivery in Accra and to every region, sent with Ghana Post and tracked to your door." },
+  { icon: "collect", title: "Click & collect", body: "Order online and collect free at a Woodin store." },
+  { icon: "exchange", title: "Easy exchanges", body: "Wrong size? Exchange in store or by courier." },
+] as const;
 
 export const WEAR_WOODIN_TILES = [
   { img: IMG.menHeritage, pos: "50% 30%" },
