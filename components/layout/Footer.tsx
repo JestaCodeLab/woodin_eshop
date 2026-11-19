@@ -57,7 +57,7 @@ const PAYMENT_BADGES = [
   { name: "MTN MoMo", logo: "/payments/mtn.png" },
   { name: "Telecel Cash", logo: "/payments/telecel.png" },
   { name: "AT Money", logo: "/payments/at.png" },
-  { name: "Visa", logo: "/payments/visa.png" },
+  { name: "Visa", logo: "/payments/visa.png", wide: true },
 ];
 
 export function Footer() {
@@ -122,8 +122,8 @@ export function Footer() {
           <span>© 2026 Woodin. All rights reserved.</span>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Accepted payment methods">
             {PAYMENT_BADGES.map((p) => (
-              <li key={p.name} className="flex h-9 w-14 items-center justify-center bg-white">
-                <Image src={p.logo} alt={p.name} width={80} height={56} unoptimized className="h-full w-full object-contain" />
+              <li key={p.name} className={`h-9 overflow-hidden bg-white ${"wide" in p ? "w-[104px] px-2.5" : "w-9"}`}>
+                <Image src={p.logo} alt={p.name} width={80} height={56} unoptimized className={`h-full w-full ${"wide" in p ? "object-contain" : "object-cover"}`} />
               </li>
             ))}
           </ul>
