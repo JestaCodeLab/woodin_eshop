@@ -137,6 +137,7 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
 
   const override = PRODUCT_OVERRIDES[raw.sku];
   const title = override?.name ?? cleanTitle(raw.name, kind, leaf);
+  const label = override?.category ?? categoryLabel(kind, leaf, slugs);
 
   return {
     id: raw.id,
@@ -145,7 +146,8 @@ export function normalizeProduct(raw: WCProduct, categories: Category[]): Produc
     title,
     rawName: raw.name,
     kind,
-    categoryLabel: override?.category ?? categoryLabel(kind, leaf, slugs),
+    categoryLabel: label,
+    audience: /^Women\b/.test(label) ? "women" : /^Men\b/.test(label) ? "men" : "both",
     categories: refs,
     leafCategory: leaf,
     price: resolvePrice(raw, kind, leaf, override?.price),

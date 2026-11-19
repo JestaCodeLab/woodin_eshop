@@ -48,7 +48,10 @@ async function getAllInCategory(wcSlug: string): Promise<Product[]> {
 export async function getSectionProducts(section?: ShopSectionKey): Promise<Product[]> {
   if (section) {
     const wc = SHOP_SECTIONS.find((s) => s.key === section)!.wcSlug;
-    return getAllInCategory(wc);
+    const list = await getAllInCategory(wc);
+    // WooCommerce files some products under both Men's and Ladies wear, so Men and Women also
+    // filter on each product's audience (unisex items stay in both).
+    return section === "men" || section === "women" ? list.filter((p) => p.audience === "both" || p.audience === section) : list;
   }
   const [rtw, fabrics] = await Promise.all([getAllInCategory("ready-to-wear"), getAllInCategory("fabrics")]);
   const seen = new Set<number>();
