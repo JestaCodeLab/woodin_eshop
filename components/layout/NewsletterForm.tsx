@@ -16,7 +16,7 @@ export function NewsletterForm() {
         role="status"
         className="m-0 flex-1 basis-[420px] font-display text-2xl italic text-ivory"
       >
-        Welcome to the circle. Check your inbox for your code.
+        Welcome to the Woodin Nation. Check your inbox for your code.
       </p>
     );
   }
