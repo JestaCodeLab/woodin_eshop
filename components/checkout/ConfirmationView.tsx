@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import { LogoLoader } from "@/components/ui/LogoLoader";
 import { formatMoney } from "@/lib/format";
 import { IMG, LOGO } from "@/lib/images";
-import { MAIN_LINKS } from "@/lib/links";
 
 type Result = { status: "paid" | "pending" | "failed" | "review"; orderNumber?: string; total?: string; delivery?: string };
 type View = { kind: "checking" } | { kind: "result"; result: Result } | { kind: "error"; message: string };
@@ -127,7 +126,7 @@ export function ConfirmationView() {
       <div className="flex min-w-0 flex-[1_1_460px] flex-col justify-center gap-5 border border-line bg-white p-8 md:p-14">
         <Image src={LOGO.mark.src} width={LOGO.mark.width} height={LOGO.mark.height} alt="" className="h-auto w-12" />
         <h1 className="m-0 font-display text-[clamp(40px,5vw,62px)] font-normal leading-none text-brown">
-          Merci. <span className="italic">Thank you.</span>
+          <span className="italic">Thank you.</span>
         </h1>
         <p className="m-0 text-base font-light leading-[1.7] text-body" role="status">
           Your order <strong className="font-medium">#{orderNumber}</strong> is confirmed and paid. We have sent your receipt by email.
@@ -139,7 +138,7 @@ export function ConfirmationView() {
         </dl>
         <div className="flex flex-wrap gap-2.5">
           <Button href="/shop" variant="primary" className="px-[30px] py-[18px]">Continue shopping</Button>
-          <Button href={MAIN_LINKS.home} variant="outline-brown" className="px-[30px] py-[17px]">Back to woodinfashion.com</Button>
+          <Button href={`/track?order=${encodeURIComponent(orderNumber)}`} variant="outline-brown" className="px-[30px] py-[17px]">Track my order</Button>
         </div>
         <p className="m-0 font-display text-xl italic">Wear it, tag it — #WearWoodin</p>
       </div>
