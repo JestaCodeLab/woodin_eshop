@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, Mars, Menu, Scissors, Venus, X, type LucideIcon } from "lucide-react";
+import { MapPin, Mars, Menu, PackageSearch, Scissors, Venus, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -13,6 +13,7 @@ const LINKS: { key: string; label: string; href: string; Icon: LucideIcon }[] = 
   { key: "women", label: "Women", href: shopHref("women"), Icon: Venus },
   { key: "fabrics", label: "Fabrics", href: shopHref("fabrics"), Icon: Scissors },
   { key: "stores", label: "Find a store", href: "/stores", Icon: MapPin },
+  { key: "track", label: "Track your order", href: "/track", Icon: PackageSearch },
 ];
 
 /**
@@ -31,7 +32,7 @@ export function MobileMenu({ note }: { note: string }) {
     dialog.current?.close();
   }, [pathname, cat]);
 
-  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : null;
+  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : pathname === "/track" ? "track" : null;
   const close = () => dialog.current?.close();
 
   return (

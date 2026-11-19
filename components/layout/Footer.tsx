@@ -20,9 +20,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "Track your order", href: "/track" },
       { label: "Delivery & returns", href: "#" },
-      { label: "Size guide", href: "#" },
       { label: "FAQs", href: "#" },
-      { label: "Contact us", href: "#" },
     ],
   },
   {
