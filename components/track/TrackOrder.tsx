@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
 import type { TrackingView } from "@/lib/tracking";
@@ -15,6 +15,24 @@ export function TrackOrder() {
   const [view, setView] = useState<TrackingView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+
+  // Start fresh every visit. Next keeps a page's state alive when you navigate away (and the browser
+  // does too on Back), so clear the result and the form whenever the page is left or restored.
+  useEffect(() => {
+    const reset = () => {
+      setView(null);
+      setError(null);
+      setBusy(false);
+      form.current?.reset();
+    };
+    const onShow = (e: PageTransitionEvent) => e.persisted && reset();
+    window.addEventListener("pageshow", onShow);
+    return () => {
+      window.removeEventListener("pageshow", onShow);
+      reset();
+    };
+  }, []);
 
   async function onSubmit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
@@ -52,7 +70,7 @@ export function TrackOrder() {
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-[1fr_1.4fr_auto] sm:items-end">
+        <form ref={form} onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-[1fr_1.4fr_auto] sm:items-end">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="trk-order" className={label}>Order number</label>
             <input id="trk-order" name="order" inputMode="numeric" autoComplete="off" required defaultValue={prefill} placeholder="5470" className={field} />
