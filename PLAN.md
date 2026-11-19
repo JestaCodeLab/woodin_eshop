@@ -248,7 +248,10 @@ Vercel project for this repo, custom domain `shop.woodinfashion.com` (a CNAME `s
 
 - **`/stores`** (new, 6th page). The main site's locator is being removed, so the header "Find a store" (top-left, as in the design) and the "Stores" nav item both go here, and so do the footer and product-page links.
 - **Data: `STORES_JSON` env var**, a one-line JSON array validated by zod in `lib/stores.ts` (name, address, region, phone, gps, lat+lng, hours rows, services, directionsUrl). Bad entries are skipped with a server log. Unset = two placeholder stores. The same list fills the checkout click-and-collect dropdown.
-- **Map:** Leaflet + OpenStreetMap tiles (no API key), W-mark pins, only for stores that have lat+lng; loaded client-side and code-split to this page. One-finger map drag is off on touch screens so it can't trap page scroll.
+- **Map:** Google Maps embed for the selected store, found from its address (or an optional per-store `mapQuery` such as "Woodin Boutique - Osu, Oxford St, Accra, Ghana"). No coordinates needed. Keyless classic embed by default; set `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` to use the official Maps Embed API. Leaflet/OSM was removed.
+- **"Use my location"** is an outlined button over the top-right of the map: it asks the browser for the position and redraws the embed as a route from the visitor to the selected store (nothing is sent to our server). Distance sorting only applies to stores that have lat+lng.
+- **Stores in use:** Accra Mall and Osu Store (data copied from woodinfashion.com/store-locator/ into `STORES_JSON`).
+- **Socials:** `SOCIAL_INSTAGRAM_URL`, `SOCIAL_FACEBOOK_URL`, `SOCIAL_X_URL`, `SOCIAL_YOUTUBE_URL` (defaults = the accounts on woodinfashion.com; empty hides one). Used in the footer, #WearWoodin and Organization `sameAs`.
 - **Few stores:** search and region chips appear only when there are more than 3 stores. "Use my location" (browser geolocation, sorted by distance, nothing sent anywhere) appears when any store has coordinates.
 - Deep link: `/stores?store=<id>` preselects a store.
 

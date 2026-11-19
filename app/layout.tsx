@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageLoader } from "@/components/layout/PageLoader";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { MAIN_LINKS } from "@/lib/links";
+import { SOCIAL_LINKS } from "@/lib/social";
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 alternateName: "Woodin Le créateur",
                 url: MAIN_LINKS.home,
                 logo: absoluteUrl("/icon-512.png"),
+                sameAs: SOCIAL_LINKS.map((l) => l.href),
               },
               {
                 "@type": "WebSite",

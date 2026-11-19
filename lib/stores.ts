@@ -23,6 +23,8 @@ export const storeSchema = z.object({
   phone: text(40).optional(),
   /** GhanaPostGPS digital address, e.g. "GA-123-4567". */
   gps: text(30).optional(),
+  /** What Google Maps should search for (e.g. "Woodin Boutique - Osu, Oxford St, Accra, Ghana"). Defaults to the address. */
+  mapQuery: text(240).optional(),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
   hours: z.array(hoursRow).max(10).optional(),

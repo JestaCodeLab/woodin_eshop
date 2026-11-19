@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LOGO } from "@/lib/images";
 import { isExternal, shopHref } from "@/lib/links";
+import { SOCIAL_LINKS, type SocialKey } from "@/lib/social";
 import { NewsletterForm } from "./NewsletterForm";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
@@ -33,6 +34,24 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
 ];
+
+const ICONS: Record<SocialKey, React.ReactNode> = {
+  instagram: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" />
+    </>
+  ),
+  facebook: <path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z" />,
+  x: <path d="M4 4l16 16M20 4L4 20" />,
+  youtube: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="4" />
+      <path d="M10 9l5 3-5 3z" />
+    </>
+  ),
+};
 
 const PAYMENT_BADGES = ["MTN MoMo", "Telecel Cash", "AT Money", "Visa", "Mastercard"];
 
@@ -66,21 +85,11 @@ export function Footer() {
             Wax prints and ready-to-wear designed for those who wear their identity with confidence.
           </p>
           <div className="flex gap-1">
-            <SocialLink label="Instagram">
-              <rect x="3" y="3" width="18" height="18" rx="5" />
-              <circle cx="12" cy="12" r="4" />
-              <circle cx="17.5" cy="6.5" r="1" />
-            </SocialLink>
-            <SocialLink label="Facebook">
-              <path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z" />
-            </SocialLink>
-            <SocialLink label="X (Twitter) @woodinafrica">
-              <path d="M4 4l16 16M20 4L4 20" />
-            </SocialLink>
-            <SocialLink label="YouTube">
-              <rect x="2" y="5" width="20" height="14" rx="4" />
-              <path d="M10 9l5 3-5 3z" />
-            </SocialLink>
+            {SOCIAL_LINKS.map((l) => (
+              <SocialLink key={l.key} label={l.label} href={l.href}>
+                {ICONS[l.key]}
+              </SocialLink>
+            ))}
           </div>
         </div>
 
@@ -124,11 +133,13 @@ export function Footer() {
   );
 }
 
-function SocialLink({ label, children }: { label: string; children: React.ReactNode }) {
+function SocialLink({ label, href, children }: { label: string; href: string; children: React.ReactNode }) {
   return (
     <a
-      href="#"
-      aria-label={label}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${label} (opens in a new tab)`}
       className="flex h-11 w-11 items-center justify-center border border-ivory/35 text-ivory"
     >
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

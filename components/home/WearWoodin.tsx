@@ -1,4 +1,5 @@
 import { CoverImage } from "@/components/ui/CoverImage";
+import { INSTAGRAM_URL } from "@/lib/social";
 
 export function WearWoodin({ tiles }: { tiles: { img: string; pos: string }[] }) {
   return (
@@ -7,9 +8,11 @@ export function WearWoodin({ tiles }: { tiles: { img: string; pos: string }[] })
         <h2 className="m-0 font-display text-[clamp(36px,5vw,58px)] font-normal italic leading-none">
           #WearWoodin
         </h2>
-        <a href="#" className="label-caps py-3 text-ink">
-          Follow on Instagram
-        </a>
+        {INSTAGRAM_URL ? (
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="label-caps py-3 text-ink">
+            Follow on Instagram
+          </a>
+        ) : null}
       </div>
       <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 sm:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t, i) => (
