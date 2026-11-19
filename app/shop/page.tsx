@@ -52,12 +52,20 @@ export async function generateMetadata({ searchParams }: PageProps<"/shop">): Pr
 
 async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">["searchParams"] }) {
   const params = parseShopParams(await searchParams);
-  const [all, categories] = await Promise.all([getSectionProducts(params.cat), getCategories()]);
+  const [all, categories, men, women] = await Promise.all([
+    getSectionProducts(params.cat),
+    getCategories(),
+    getSectionProducts("men"),
+    getSectionProducts("women"),
+  ]);
   const result = filterShop(all, params);
 
-  const sectionCounts = Object.fromEntries(
+  // Men / Women counts come from the audience-filtered lists so they match what is listed.
+  const sectionCounts: Record<string, number> = Object.fromEntries(
     SHOP_SECTIONS.map((s) => [s.wcSlug, categories.find((c) => c.slug === s.wcSlug)?.count ?? 0]),
   );
+  sectionCounts["mens-wear"] = men.length;
+  sectionCounts["ladies-wear"] = women.length;
   const allCount = SHOP_SECTIONS.filter((s) => s.key !== "men" && s.key !== "women").reduce(
     (n, s) => n + (sectionCounts[s.wcSlug] ?? 0),
     categories.find((c) => c.slug === "ready-to-wear")?.count ?? 0,

@@ -128,6 +128,8 @@ export interface Product {
   kind: ProductKind;
   /** "Women · Dresses", "Fabrics · Tendresse De Woodin"… */
   categoryLabel: string;
+  /** Who it is for. "both" = unisex or unknown. Decides which of Men / Women lists it. */
+  audience: "women" | "men" | "both";
   categories: Category[];
   /** Deepest category, used for related products and breadcrumbs. */
   leafCategory: Category | null;
