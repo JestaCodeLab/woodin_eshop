@@ -13,9 +13,9 @@ export const ZONES: { id: ZoneId; name: string; short: string; eta: string; fee:
 
 export type MethodId = "mtn" | "telecel" | "at" | "card";
 
-export const METHODS: { id: MethodId; name: string; short: string; dot: string; note: string }[] = [
-  { id: "mtn", name: "MTN MoMo", short: "MTN MoMo", dot: "#FFCC00", note: "Most used" },
-  { id: "telecel", name: "Telecel Cash", short: "Telecel Cash", dot: "#E60000", note: "" },
-  { id: "at", name: "AT Money", short: "AT Money", dot: "#1E4FA8", note: "" },
-  { id: "card", name: "Visa or Mastercard", short: "card", dot: "#1A120E", note: "3-D Secure" },
+export const METHODS: { id: MethodId; name: string; short: string; logo: string; note: string }[] = [
+  { id: "mtn", name: "MTN MoMo", short: "MTN MoMo", logo: "/payments/mtn.png", note: "Most used" },
+  { id: "telecel", name: "Telecel Cash", short: "Telecel Cash", logo: "/payments/telecel.png", note: "" },
+  { id: "at", name: "AT Money", short: "AT Money", logo: "/payments/at.png", note: "" },
+  { id: "card", name: "Visa or Mastercard", short: "card", logo: "/payments/visa.png", note: "3-D Secure" },
 ];
