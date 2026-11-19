@@ -87,3 +87,49 @@ add_action('woocommerce_process_shop_order_meta', function ($order_id) {
     $order->update_meta_data('woodin_tracking_number', $number);
     $order->save();
 }, 10, 1);
+
+/**
+ * 3. Customer email when an order moves to "Shipped" or "Ready for collection".
+ * WooCommerce only emails for its built-in statuses (Processing, Completed, ...), so these two need their own.
+ * The SMS goes out separately through the eshop webhook. Optional: define('WOODIN_TRACK_URL', 'https://your-eshop/track')
+ * in wp-config.php to change the tracking page link.
+ */
+function woodin_send_status_email($order_id, $kind)
+{
+    $order = wc_get_order($order_id);
+    if (!$order || !is_email($order->get_billing_email())) {
+        return;
+    }
+    $flag = 'woodin_email_sent_' . $kind;
+    if ($order->get_meta($flag)) {
+        return; // never email the same step twice
+    }
+
+    $name    = $order->get_billing_first_name() ?: 'there';
+    $number  = $order->get_id();
+    $track   = defined('WOODIN_TRACK_URL') ? WOODIN_TRACK_URL : 'https://www.woodinfashion.store/track';
+    $code    = trim((string) $order->get_meta('woodin_tracking_number'));
+
+    if ($kind === 'shipped') {
+        $subject = "Your Woodin order #$number has shipped";
+        $lines   = ["Good news, $name. Your order #$number has been handed to Ghana Post."];
+        if ($code !== '') {
+            $lines[] = "Ghana Post tracking number: $code";
+        }
+    } else {
+        $subject = "Your Woodin order #$number is ready for collection";
+        $lines   = ["Good news, $name. Your order #$number is ready for collection in store. Please bring your order number."];
+    }
+    $lines[] = "Follow your order any time: $track";
+    $lines[] = "Thank you for shopping with Woodin.";
+
+    wp_mail($order->get_billing_email(), $subject, implode("\n\n", $lines));
+    $order->update_meta_data($flag, '1');
+    $order->save();
+}
+add_action('woocommerce_order_status_shipped', function ($order_id) {
+    woodin_send_status_email($order_id, 'shipped');
+}, 20);
+add_action('woocommerce_order_status_ready-collection', function ($order_id) {
+    woodin_send_status_email($order_id, 'ready');
+}, 20);
