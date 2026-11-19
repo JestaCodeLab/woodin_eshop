@@ -138,7 +138,7 @@ export function ConfirmationView() {
         </dl>
         <div className="flex flex-wrap gap-2.5">
           <Button href="/shop" variant="primary" className="px-[30px] py-[18px]">Continue shopping</Button>
-          <Button href={`/track?order=${encodeURIComponent(orderNumber)}`} variant="outline-brown" className="px-[30px] py-[17px]">Track my order</Button>
+          <Button href={`/track?order=${encodeURIComponent(orderNumber ?? "")}`} variant="outline-brown" className="px-[30px] py-[17px]">Track my order</Button>
         </div>
         <p className="m-0 font-display text-xl italic">Wear it, tag it — #WearWoodin</p>
       </div>
