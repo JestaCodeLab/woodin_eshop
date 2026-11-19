@@ -72,9 +72,20 @@ export interface WCOrder {
   status: string;
   currency: string;
   total: string;
-  meta_data: { key: string; value: unknown }[];
-  shipping_lines: { method_title: string }[];
+  date_created_gmt?: string;
+  meta_data: { id?: number; key: string; value: unknown }[];
+  billing?: { first_name?: string; last_name?: string; email?: string; phone?: string };
+  line_items?: { name: string; quantity: number }[];
+  shipping_lines: { method_id?: string; method_title: string }[];
+  /** Refunds on the order. `total` is a negative amount string, e.g. "-50.00". */
+  refunds?: { id: number; reason?: string; total: string }[];
 }
+
+/** Reads a meta value off an order (string, or undefined). */
+export const orderMeta = (o: WCOrder, key: string): string | undefined => {
+  const v = o.meta_data.find((m) => m.key === key)?.value;
+  return typeof v === "string" ? v : undefined;
+};
 
 export interface NewOrder {
   status: "pending";
