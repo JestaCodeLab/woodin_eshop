@@ -196,7 +196,7 @@ export function CartView({ threshold }: { threshold: number | null }) {
           <ul className="m-0 flex list-none flex-col gap-2.5 border-t border-line p-0 pt-4 text-[13px] font-light text-body">
             <li>✓ Secure payment by Paystack</li>
             <li>✓ Free click &amp; collect at any Woodin store</li>
-            <li>✓ Size exchanges within [X] days</li>
+            <li>✓ Size exchanges within 3 business days</li>
           </ul>
         </aside>
       </section>

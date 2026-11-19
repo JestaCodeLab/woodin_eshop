@@ -49,7 +49,7 @@ function panelsFor(p: Product): AccordionItem[] {
   const items: AccordionItem[] = [
     { title: "Description", body: p.description || "[Product description from Woodin: the cut, how to wear it, what makes it special.]" },
     { title: "Fabric & care", body: "[Fabric composition and care instructions.]" },
-    { title: "Delivery & returns", body: "Accra delivery in [X] days, other regions in [X] days, free click & collect. Size exchanges within [X] days." },
+    { title: "Delivery & returns", body: "Accra delivery in [X] days, other regions in [X] days, free click & collect. Size exchanges within 3 business days." },
   ];
   if (p.kind === "rtw") items.push({ title: "Size guide", body: "[Measurements table for XS to XL.]" });
   return items;
