@@ -45,6 +45,6 @@ export async function POST(req: Request) {
   if (orderMeta(order, "woodin_eshop") !== "1") return Response.json({ ok: true, ignored: "not an eshop order" });
 
   // "paid" is sent by checkout; everything else follows what the shop manager did in WordPress.
-  const result = await notifyOrder(order, ["shipped", "ready", "delivered", "refund"]);
+  const result = await notifyOrder(order, ["shipped", "ready", "delivered", "refund", "cancelled"]);
   return Response.json({ ok: true, ...result });
 }
