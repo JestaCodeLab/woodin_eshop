@@ -2,7 +2,7 @@ import { ExchangeIcon, StoreIcon, TruckIcon, WalletIcon } from "@/components/ui/
 
 const ICONS = { pay: WalletIcon, delivery: TruckIcon, collect: StoreIcon, exchange: ExchangeIcon };
 
-export function ServicesRow({ services }: { services: { icon: keyof typeof ICONS; title: string; body: string }[] }) {
+export function ServicesRow({ services }: { services: readonly { icon: keyof typeof ICONS; title: string; body: string }[] }) {
   return (
     <section aria-label="Services" className="border-y border-line">
       <ul className="content-wrap m-0 grid list-none gap-7 py-10 sm:grid-cols-2 lg:grid-cols-4">
