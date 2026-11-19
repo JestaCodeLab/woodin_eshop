@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BagLink } from "@/components/cart/BagLink";
-import { SearchIcon } from "@/components/ui/icons";
 import { freeDeliveryLabel } from "@/lib/config";
 import { LOGO } from "@/lib/images";
 import { MenuIcon } from "@/components/ui/icons";
+import { HeaderSearch } from "./HeaderSearch";
 import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 import { NavList } from "./NavList";
@@ -31,7 +31,7 @@ export function Header({ variant = "solid" }: HeaderProps) {
       <div className={`border-b ${overlay ? "border-white/30" : "border-line"}`}>
         <div className="content-wrap grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 md:gap-4 md:pb-1 md:pt-4">
           <div className="flex items-center">
-            {/* Phones: hamburger + drawer. md and up: the "Find a store" link and the nav row below. */}
+            {/* Phones: hamburger + drawer. md and up: the "Track your order" link and the nav row below. */}
             <Suspense
               fallback={
                 <span aria-hidden="true" className={`${iconBtn} md:hidden`}>
@@ -41,8 +41,8 @@ export function Header({ variant = "solid" }: HeaderProps) {
             >
               <MobileMenu note={announcement} />
             </Suspense>
-            <Link href="/stores" className="hidden items-center px-2 py-3 text-xs uppercase tracking-[0.14em] md:flex">
-              Find a store
+            <Link href="/track" className="hidden items-center px-2 py-3 text-xs uppercase tracking-[0.14em] md:flex">
+              Track your order
             </Link>
           </div>
 
@@ -58,9 +58,7 @@ export function Header({ variant = "solid" }: HeaderProps) {
           </Link>
 
           <div className="flex items-center justify-end gap-0.5">
-            <Link href="/shop#search" aria-label="Search the shop" className={iconBtn}>
-              <SearchIcon />
-            </Link>
+            <HeaderSearch className={iconBtn} />
             <BagLink />
           </div>
         </div>
