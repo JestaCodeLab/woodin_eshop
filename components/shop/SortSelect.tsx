@@ -23,7 +23,7 @@ export function SortSelect({
           const next = options.find((o) => o.value === e.target.value);
           if (next) router.push(next.href);
         }}
-        className="h-11 border border-line-strong bg-white px-3 text-sm"
+        className="h-11 border border-line-strong bg-white px-3 text-[15px]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

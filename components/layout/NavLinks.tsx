@@ -10,7 +10,9 @@ export function NavLinks({ overlay }: { overlay: boolean }) {
   const active: NavKey | null =
     pathname === "/stores"
       ? "stores"
-      : pathname === "/shop" && (cat === "men" || cat === "women" || cat === "fabrics")
+      : pathname === "/insights" || pathname.startsWith("/insights/")
+        ? "insights"
+        : pathname === "/shop" && (cat === "men" || cat === "women" || cat === "fabrics")
         ? cat
         : null;
   return <NavList active={active} overlay={overlay} />;

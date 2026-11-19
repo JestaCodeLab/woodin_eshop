@@ -12,6 +12,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Men", href: shopHref("men") },
       { label: "Women", href: shopHref("women") },
       { label: "Fabrics", href: shopHref("fabrics") },
+      { label: "Insights", href: "/insights" },
     ],
   },
   {
@@ -82,7 +83,7 @@ export function Footer() {
             width={LOGO.footer.width}
             height={LOGO.footer.height}
             alt="Woodin Le créateur"
-            className="h-auto w-[96px]"
+            className="h-auto w-[76px]"
           />
           <p className="m-0 max-w-[300px] text-sm font-light leading-[1.7]">
             Wax prints and ready-to-wear designed for those who wear their identity with confidence.

@@ -65,7 +65,7 @@ export function TrackOrder() {
         <div className="flex flex-col gap-3.5">
           <span className="label-caps tracking-[0.28em] text-gold">Your order</span>
           <h1 className="m-0 font-display text-[clamp(34px,4.5vw,60px)] font-normal leading-none text-brown">Track your order</h1>
-          <p className="m-0 text-base font-light leading-[1.7] text-body">
+          <p className="m-0 text-[19px] font-light leading-[1.7] text-body">
             Enter the order number from your confirmation (for example 5470) and the email you used at checkout.
           </p>
         </div>
@@ -107,7 +107,7 @@ function Result({ view }: { view: TrackingView }) {
 
       <div className="flex flex-col gap-1.5">
         <span className={`font-display text-[28px] leading-none ${view.cancelled ? "text-lowstock" : "text-brown"}`}>{view.statusLabel}</span>
-        <p className="m-0 text-[15px] font-light text-body">{view.statusNote}</p>
+        <p className="m-0 text-[19px] font-light text-body">{view.statusNote}</p>
       </div>
 
       {view.steps.length > 0 ? (

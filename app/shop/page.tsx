@@ -123,7 +123,7 @@ async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">[
           ) : (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
               <span className="font-display text-[30px]">No pieces match</span>
-              <p className="m-0 text-[15px] font-light text-body">Try removing a filter or searching for something else.</p>
+              <p className="m-0 text-[19px] font-light text-body">Try removing a filter or searching for something else.</p>
               <Link href={`/shop${params.cat ? `?cat=${params.cat}` : ""}`} className="label-caps border border-brown px-7 py-4 text-brown no-underline">
                 Clear all filters
               </Link>

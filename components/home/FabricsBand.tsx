@@ -20,7 +20,7 @@ export function FabricsBand({ fabrics }: { fabrics: FabricTile[] }) {
           <h2 className="m-0 font-display text-[clamp(36px,5vw,56px)] font-normal leading-none">
             The print is the <span className="italic">story</span>.
           </h2>
-          <p className="m-0 text-base font-light leading-[1.7] text-[#e9ded0]">
+          <p className="m-0 text-[19px] font-light leading-[1.7] text-[#e9ded0]">
             Shop Woodin prints by the piece and have them tailored your way. Every print online, with stock
             checked at your nearest store.
           </p>
