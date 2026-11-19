@@ -53,7 +53,12 @@ const ICONS: Record<SocialKey, React.ReactNode> = {
   ),
 };
 
-const PAYMENT_BADGES = ["MTN MoMo", "Telecel Cash", "AT Money", "Visa", "Mastercard"];
+const PAYMENT_BADGES = [
+  { name: "MTN MoMo", logo: "/payments/mtn.png" },
+  { name: "Telecel Cash", logo: "/payments/telecel.png" },
+  { name: "AT Money", logo: "/payments/at.png" },
+  { name: "Visa", logo: "/payments/visa.png" },
+];
 
 export function Footer() {
   return (
@@ -117,8 +122,8 @@ export function Footer() {
           <span>© 2026 Woodin. All rights reserved.</span>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Accepted payment methods">
             {PAYMENT_BADGES.map((p) => (
-              <li key={p} className="border border-ivory/35 px-2.5 py-1.5 text-[11px] uppercase tracking-[0.1em] text-ivory">
-                {p}
+              <li key={p.name} className="flex h-9 w-14 items-center justify-center bg-white">
+                <Image src={p.logo} alt={p.name} width={80} height={56} unoptimized className="h-full w-full object-contain" />
               </li>
             ))}
           </ul>
