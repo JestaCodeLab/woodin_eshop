@@ -33,7 +33,8 @@ function base(): string {
     console.error(`[orders] Refusing to write orders to the live site (${url.hostname}). Point WC_ORDERS_URL at staging.`);
     throw new OrdersError(500, "Orders site not available");
   }
-  return raw.replace(/\/+$/, "");
+  // Only the site root matters: tolerate a pasted API path such as /wp-json/wc/v3/orders.
+  return url.origin;
 }
 
 async function wc<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
