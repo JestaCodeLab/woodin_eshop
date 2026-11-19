@@ -171,22 +171,24 @@ export function StoreLocator({ stores }: { stores: Store[] }) {
 
         <div className="flex min-w-0 flex-[1.6_1_520px] flex-col border border-line bg-white">
           {selected ? (
-            <div className="relative">
+            <>
+              {/* Above the map so it is always visible. */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3 md:px-7">
+                <p role="status" className="m-0 min-w-0 flex-1 basis-48 text-[13px] text-muted">
+                  {geoMessage || "Find the nearest way to get to this store."}
+                </p>
+                <button
+                  type="button"
+                  onClick={locate}
+                  disabled={geo === "locating"}
+                  className="label-caps h-11 shrink-0 border border-brown bg-transparent px-5 tracking-[0.14em] text-brown transition-colors hover:bg-brown hover:text-ivory disabled:opacity-60"
+                >
+                  {geo === "locating" ? "Locating…" : "Use my location"}
+                </button>
+              </div>
               <StoreMap store={selected} origin={here} />
-              {/* Top right of the map, left of Google's own fullscreen control. */}
-              <button
-                type="button"
-                onClick={locate}
-                disabled={geo === "locating"}
-                className="label-caps absolute right-14 top-3 h-10 border border-brown bg-white/95 px-4 tracking-[0.14em] text-brown shadow-sm transition-colors hover:bg-brown hover:text-ivory disabled:opacity-60"
-              >
-                {geo === "locating" ? "Locating…" : "Use my location"}
-              </button>
-            </div>
+            </>
           ) : null}
-          <p role="status" className="m-0 border-b border-line px-6 py-2 text-[13px] text-muted empty:hidden md:px-7">
-            {geoMessage}
-          </p>
 
           {selected ? (
             <div className="flex flex-wrap gap-7 p-6 md:p-7">

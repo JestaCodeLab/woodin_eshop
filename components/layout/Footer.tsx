@@ -62,10 +62,10 @@ export function Footer() {
         <div className="content-wrap flex flex-wrap items-center justify-between gap-7 py-10 md:py-12">
           <div className="flex min-w-0 flex-1 basis-[420px] flex-col gap-2">
             <span className="font-display text-[clamp(30px,4vw,40px)] leading-[1.05] text-ivory">
-              Join the Woodin circle
+              Join the Woodin Nation
             </span>
             <label htmlFor="ft-email" className="text-[15px] font-light leading-normal">
-              New drops first, styling notes from the studio, and [X]% off your first online order.
+              New drops first, styling notes from the studio.
             </label>
           </div>
           <NewsletterForm />
@@ -79,7 +79,7 @@ export function Footer() {
             width={LOGO.footer.width}
             height={LOGO.footer.height}
             alt="Woodin Le créateur"
-            className="h-auto w-[120px]"
+            className="h-auto w-[96px]"
           />
           <p className="m-0 max-w-[300px] text-sm font-light leading-[1.7]">
             Wax prints and ready-to-wear designed for those who wear their identity with confidence.
