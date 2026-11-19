@@ -445,7 +445,7 @@ export function CheckoutFlow({
                     onClick={() => setMethodId(m.id)}
                     className={`flex min-h-[60px] items-center gap-3 bg-white px-[18px] text-[15px] ${methodId === m.id ? radioOn : radioOff}`}
                   >
-                    <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: m.dot }} />
+                    <Image src={m.logo} alt="" width={80} height={56} unoptimized className="h-7 w-10 shrink-0 object-contain" />
                     <span className="flex-1 text-left">{m.name}</span>
                     {m.note ? <span className="text-[11px] uppercase tracking-[0.12em] text-muted">{m.note}</span> : null}
                   </button>
