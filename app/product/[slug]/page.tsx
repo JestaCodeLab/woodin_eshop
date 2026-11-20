@@ -139,7 +139,7 @@ async function ProductContent({ params }: { params: PageProps<"/product/[slug]">
           <div className="flex min-w-0 flex-[1_1_400px] flex-col gap-[26px] lg:sticky lg:top-6">
             <div className="flex flex-col gap-2.5">
               {product.badge ? <Eyebrow className="tracking-[0.22em]">{product.badge}</Eyebrow> : null}
-              <h1 className="m-0 font-display text-[clamp(36px,5vw,58px)] font-normal leading-none">{product.title}</h1>
+              <h1 className="m-0 font-display text-[clamp(28px,3.4vw,40px)] font-normal leading-[1.05]">{product.title}</h1>
               <span className="text-[13px] text-muted">
                 {product.categoryLabel} · Code {product.sku || "[CODE]"}
               </span>
