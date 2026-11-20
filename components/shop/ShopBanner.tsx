@@ -48,7 +48,7 @@ export function ShopBanner({ banners }: { banners: Banner[] }) {
       onFocus={() => setHeld(true)}
       onBlur={() => setHeld(false)}
     >
-      <div className="relative min-h-[440px] overflow-hidden bg-espresso md:min-h-[520px]">
+      <div className="relative grid overflow-hidden bg-espresso">
         {banners.map((b, i) => {
           const active = i === index;
           return (
@@ -59,16 +59,16 @@ export function ShopBanner({ banners }: { banners: Banner[] }) {
               aria-label={`${i + 1} of ${banners.length}`}
               aria-hidden={!active}
               inert={!active}
-              className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "pointer-events-none opacity-0"}`}
+              className={`relative col-start-1 row-start-1 transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
               <BannerPicture banner={b} priority={i === 0} />
               {/* Darkens the left so the text stays readable over any photo. */}
               <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-transparent md:via-black/15" />
 
-              <div className="relative flex h-full min-h-[440px] flex-col items-start justify-center gap-4 px-6 py-12 md:min-h-[520px] md:max-w-[780px] md:gap-5 md:px-12">
+              <div className="relative flex h-full min-h-[340px] flex-col items-start justify-center gap-3 px-6 pb-14 pt-10 md:min-h-[380px] md:max-w-[780px] md:gap-4 md:px-12 md:pb-12">
                 {b.badge && <span className="label-caps bg-gold-btn px-3.5 py-2 font-semibold tracking-[0.2em] text-brown">{b.badge}</span>}
                 {b.eyebrow && <span className="label-caps tracking-[0.24em] text-gold-light">{b.eyebrow}</span>}
-                <h2 className="m-0 font-display text-[clamp(40px,6vw,80px)] font-normal leading-[0.98] text-white">{b.heading}</h2>
+                <h2 className="m-0 font-display text-[clamp(34px,4.6vw,62px)] font-normal leading-[0.98] text-white">{b.heading}</h2>
                 {b.text && <p className="m-0 max-w-[560px] text-[17px] font-light leading-relaxed text-white md:text-[19px]">{b.text}</p>}
                 {(b.ctaLabel && b.ctaUrl) || (b.linkLabel && b.linkUrl) ? (
                   <div className="mt-2 flex flex-wrap items-center gap-x-8 gap-y-4">
