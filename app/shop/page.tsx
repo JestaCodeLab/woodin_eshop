@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
 import { ProductCard } from "@/components/product/ProductCard";
 import { AppliedFilters } from "@/components/shop/AppliedFilters";
+import { ShopBanner } from "@/components/shop/ShopBanner";
+import { getShopBanners } from "@/lib/banners";
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { LogoLoader } from "@/components/ui/LogoLoader";
@@ -60,6 +62,10 @@ async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">[
   ]);
   const result = filterShop(all, params);
 
+  // Banner slides for Men / Women / Fabrics, first page of the plain section view only.
+  // A WordPress outage or no banners set up simply means no banner.
+  const banners = params.cat && params.page === 1 && !params.q ? await getShopBanners(params.cat).catch(() => []) : [];
+
   // Men / Women counts come from the audience-filtered lists so they match what is listed.
   const sectionCounts: Record<string, number> = Object.fromEntries(
     SHOP_SECTIONS.map((s) => [s.wcSlug, categories.find((c) => c.slug === s.wcSlug)?.count ?? 0]),
@@ -95,6 +101,8 @@ async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">[
           />
         </div>
       </section>
+
+      {banners.length > 0 && <ShopBanner banners={banners} />}
 
       <section className="content-wrap flex flex-wrap items-start gap-x-10 gap-y-6 pb-20">
         <aside aria-label="Filters" className="w-full lg:w-[250px] lg:flex-none">
