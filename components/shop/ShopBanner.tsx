@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -61,14 +61,7 @@ export function ShopBanner({ banners }: { banners: Banner[] }) {
               inert={!active}
               className={`absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none ${active ? "opacity-100" : "pointer-events-none opacity-0"}`}
             >
-              <Image
-                src={b.image.url}
-                alt={b.image.alt}
-                fill
-                sizes="(min-width: 1536px) 1700px, 100vw"
-                priority={i === 0}
-                className="object-cover object-[70%_center]"
-              />
+              <BannerPicture banner={b} priority={i === 0} />
               {/* Darkens the left so the text stays readable over any photo. */}
               <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/30 to-transparent md:via-black/15" />
 
@@ -128,5 +121,24 @@ export function ShopBanner({ banners }: { banners: Banner[] }) {
         )}
       </div>
     </section>
+  );
+}
+
+/** Desktop photo from 768px up, phone photo below (art direction), both optimised by next/image. */
+function BannerPicture({ banner, priority }: { banner: Banner; priority: boolean }) {
+  const common = { alt: banner.image.alt, fill: true as const, priority, className: "object-cover object-[70%_center]" };
+  const {
+    props: { srcSet: desktopSet, ...desktop },
+  } = getImageProps({ ...common, src: banner.image.url, sizes: "(min-width: 1536px) 1700px, 100vw", quality: 80 });
+  const mobile = banner.mobileImage
+    ? getImageProps({ ...common, src: banner.mobileImage.url, sizes: "100vw", quality: 75 }).props.srcSet
+    : undefined;
+
+  return (
+    <picture>
+      {mobile && <source media="(max-width: 767px)" srcSet={mobile} sizes="100vw" />}
+      <source media="(min-width: 768px)" srcSet={desktopSet} sizes={desktop.sizes} />
+      <img {...desktop} alt={banner.image.alt} />
+    </picture>
   );
 }

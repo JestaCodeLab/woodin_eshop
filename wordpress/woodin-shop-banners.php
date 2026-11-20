@@ -9,8 +9,11 @@
  *
  * HOW STAFF USE IT: WordPress admin > Shop banners > Add New.
  *   - Title            = the big headline (e.g. "The Heritage drop")
- *   - Featured image   = the banner photo (landscape, about 2400 x 1000 px; keep faces/subject on the right half,
- *                        the text sits over the left side)
+ *   - Featured image   = the DESKTOP banner photo. Upload any landscape photo, at least 2400 px wide: WordPress crops it to
+ *                        2400 x 1000 on upload. Keep the subject on the right half; the text sits over the left side.
+ *   - Mobile image     = (optional) a separate photo for phones, at least 900 x 1100 px. If you skip it, the desktop photo
+ *                        is cropped to a tall shape automatically. Use it when the automatic crop cuts the subject off.
+ *   - To choose WHAT is cropped, open the photo in Media > Edit image > Crop, then save, before using it.
  *   - Page             = Men, Women or Fabrics
  *   - Order            = (right column, "Order") 1 is the first slide, 2 the second
  *   - Publish          = live. Move to Draft or Trash to take it down. Only the first two per page are shown.
@@ -20,6 +23,14 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+/** Crop sizes. WordPress makes both whenever a photo is uploaded. Desktop keeps the RIGHT of the photo (text sits on the left). */
+define('WOODIN_BANNER_DESKTOP', 'woodin_banner_desktop');
+define('WOODIN_BANNER_MOBILE', 'woodin_banner_mobile');
+add_action('after_setup_theme', function () {
+    add_image_size(WOODIN_BANNER_DESKTOP, 2400, 1000, ['right', 'center']);
+    add_image_size(WOODIN_BANNER_MOBILE, 900, 1100, ['center', 'center']);
+});
 
 /** 1. The "Shop banners" post type (hidden from the public site, no front-end page of its own). */
 add_action('init', function () {
@@ -47,6 +58,13 @@ function woodin_banner_sections()
 {
     return ['men' => 'Men', 'women' => 'Women', 'fabrics' => 'Fabrics'];
 }
+
+add_action('admin_enqueue_scripts', function ($hook) {
+    $screen = get_current_screen();
+    if ($screen && $screen->post_type === 'woodin_banner' && in_array($hook, ['post.php', 'post-new.php'], true)) {
+        wp_enqueue_media();
+    }
+});
 
 /** 2. The fields box. */
 add_action('add_meta_boxes', function () {
@@ -85,6 +103,31 @@ function woodin_banner_box($post)
         esc_textarea($get('wb_text'))
     );
 
+    $mobile_id = (int) $get('wb_mobile_id');
+    echo '<div class="wb-row"><label>Mobile image (optional)</label>';
+    echo '<div id="wb_mobile_preview" style="margin-bottom:6px">' . ($mobile_id ? wp_get_attachment_image($mobile_id, [120, 147]) : '') . '</div>';
+    printf('<input type="hidden" id="wb_mobile_id" name="wb_mobile_id" value="%d" />', $mobile_id);
+    echo '<button type="button" class="button" id="wb_mobile_pick">Choose mobile image</button> <button type="button" class="button-link" id="wb_mobile_clear"' . ($mobile_id ? '' : ' style="display:none"') . '>Remove</button>';
+    echo '<div class="wb-hint">Portrait photo for phones, at least 900 x 1100 px (it is cropped to that shape). Leave empty to crop the desktop photo automatically.</div></div>';
+    echo '<script>
+    jQuery(function ($) {
+        var frame;
+        $("#wb_mobile_pick").on("click", function (e) {
+            e.preventDefault();
+            frame = frame || wp.media({ title: "Mobile banner image", button: { text: "Use this image" }, library: { type: "image" }, multiple: false });
+            frame.off("select").on("select", function () {
+                var a = frame.state().get("selection").first().toJSON();
+                $("#wb_mobile_id").val(a.id);
+                var u = (a.sizes && a.sizes.thumbnail) ? a.sizes.thumbnail.url : a.url;
+                $("#wb_mobile_preview").html("<img src=\"" + u + "\" style=\"max-width:120px;height:auto\" alt=\"\">");
+                $("#wb_mobile_clear").show();
+            });
+            frame.open();
+        });
+        $("#wb_mobile_clear").on("click", function () { $("#wb_mobile_id").val(0); $("#wb_mobile_preview").empty(); $(this).hide(); });
+    });
+    </script>';
+
     echo '<div class="wb-grid">';
     $buttons = [
         ['wb_cta_label',  'Main button text', 'SHOP NEW FOR MEN', 60],
@@ -119,6 +162,8 @@ add_action('save_post_woodin_banner', function ($post_id) {
     foreach (['wb_badge', 'wb_eyebrow', 'wb_cta_label', 'wb_link_label'] as $k) {
         update_post_meta($post_id, $k, isset($_POST[$k]) ? sanitize_text_field(wp_unslash($_POST[$k])) : '');
     }
+    $mobile = isset($_POST['wb_mobile_id']) ? absint($_POST['wb_mobile_id']) : 0;
+    update_post_meta($post_id, 'wb_mobile_id', ($mobile && wp_attachment_is_image($mobile)) ? $mobile : 0);
     update_post_meta($post_id, 'wb_text', isset($_POST['wb_text']) ? sanitize_textarea_field(wp_unslash($_POST['wb_text'])) : '');
 
     // Links: a site path ("/shop?cat=men") or an https URL. Anything else is dropped.
@@ -170,10 +215,14 @@ add_action('rest_api_init', function () {
                     continue; // two slides per page
                 }
                 $thumb = get_post_thumbnail_id($p->ID);
-                $img   = $thumb ? wp_get_attachment_image_src($thumb, 'full') : null;
+                $img   = $thumb ? wp_get_attachment_image_src($thumb, WOODIN_BANNER_DESKTOP) : null;
                 if (!$img) {
                     continue; // a banner without a photo is not shown
                 }
+                // Phone photo: the separate upload if there is one, otherwise the desktop photo cropped tall.
+                $mid    = (int) get_post_meta($p->ID, 'wb_mobile_id', true);
+                $mid    = ($mid && wp_attachment_is_image($mid)) ? $mid : $thumb;
+                $mobile = wp_get_attachment_image_src($mid, WOODIN_BANNER_MOBILE) ?: $img;
                 $m = function ($k) use ($p) {
                     return (string) get_post_meta($p->ID, $k, true);
                 };
@@ -189,6 +238,7 @@ add_action('rest_api_init', function () {
                     'linkLabel' => $m('wb_link_label'),
                     'linkUrl'   => $m('wb_link_url'),
                     'image'     => ['url' => $img[0], 'width' => (int) $img[1], 'height' => (int) $img[2], 'alt' => (string) get_post_meta($thumb, '_wp_attachment_image_alt', true)],
+                    'mobileImage' => ['url' => $mobile[0], 'width' => (int) $mobile[1], 'height' => (int) $mobile[2]],
                 ];
             }
             return rest_ensure_response($out);
