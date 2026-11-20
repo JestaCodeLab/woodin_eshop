@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Header } from "@/components/layout/Header";
+import { BackLink } from "@/components/product/BackLink";
 import { InfoBlocks } from "@/components/product/InfoBlocks";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ProductGallery } from "@/components/product/ProductGallery";
@@ -122,6 +123,9 @@ async function ProductContent({ params }: { params: PageProps<"/product/[slug]">
         ]}
       />
       <section className="content-standard pb-12 pt-6 md:pb-20">
+        <div className="mb-2">
+          <BackLink fallbackHref={section ? shopHref(section) : "/shop"} />
+        </div>
         <nav aria-label="Breadcrumb" className="label-caps mb-6 tracking-[0.16em] text-muted">
           <Link href="/" className="text-muted">Home</Link> / <Link href="/shop" className="text-muted">Shop</Link>
           {section ? (
