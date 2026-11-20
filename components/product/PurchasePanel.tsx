@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { HeartIcon } from "@/components/ui/icons";
 import { formatMoney } from "@/lib/format";
 import type { SizeOption } from "@/lib/types";
@@ -24,6 +25,7 @@ interface Props {
 export function PurchasePanel({ productId, title, priceLabel, inStock, sizes, threshold, sizesAreDemo }: Props) {
   const { add, busy, error } = useCart();
   const [size, setSize] = useState<string | null>(null);
+  const [qty, setQty] = useState(1);
   const [wish, setWish] = useState(false);
   const [addedMsg, setAddedMsg] = useState<string | null>(null);
 
@@ -31,18 +33,25 @@ export function PurchasePanel({ productId, title, priceLabel, inStock, sizes, th
   const picked = sizes.find((s) => s.label === size);
   const canAdd = inStock && (!needsSize || (picked !== undefined && picked.state !== "out"));
 
+  // A size with only a few left caps the quantity; otherwise the bag limit applies.
+  const maxQty = picked?.state === "low" && typeof picked.left === "number" ? Math.max(1, Math.min(9, picked.left)) : 9;
+  const quantity = Math.min(qty, maxQty);
+
   const stockNote =
     picked?.state === "low" ? `Only ${picked.left} left in ${picked.label}.` : picked?.state === "out" ? `Sold out in ${picked.label}.` : "";
   const label = !inStock
     ? "Sold out"
     : needsSize && !picked
       ? "Select a size"
-      : `Add to bag · ${priceLabel}`;
+      : quantity > 1
+        ? `Add ${quantity} to bag`
+        : `Add to bag · ${priceLabel}`;
 
   async function onAdd() {
     if (!canAdd) return;
     const next = await add({
       productId,
+      quantity,
       variation: needsSize && size ? [{ attribute: "Size", value: size }] : [],
     });
     if (!next) return;
@@ -107,6 +116,23 @@ export function PurchasePanel({ productId, title, priceLabel, inStock, sizes, th
       ) : (
         <p className="m-0 text-sm font-light text-muted">Sold by the piece · [LENGTH]</p>
       )}
+
+      <div className="flex items-center justify-between gap-4">
+        <span id="qty-label" className="label-caps tracking-[0.18em]">
+          Quantity
+        </span>
+        <QuantityStepper
+          label="Quantity"
+          value={quantity}
+          min={1}
+          max={maxQty}
+          disabled={busy || !inStock}
+          onChange={(q) => {
+            setQty(q);
+            setAddedMsg(null);
+          }}
+        />
+      </div>
 
       <div className="flex gap-2.5">
         <button
