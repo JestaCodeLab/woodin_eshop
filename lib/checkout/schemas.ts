@@ -31,5 +31,5 @@ export const startCheckoutSchema = z
 
 export type StartCheckoutInput = z.infer<typeof startCheckoutSchema>;
 
-/** WD-<orderId>-<8 hex>. The random part makes the reference unguessable. */
-export const referenceSchema = z.object({ reference: z.string().regex(/^WD-\d+-[a-f0-9]{8}$/) });
+/** WD-<orderId>-<24 hex>. The random part makes the reference unguessable (8 hex accepted for older orders). */
+export const referenceSchema = z.object({ reference: z.string().regex(/^WD-\d+-[a-f0-9]{8,32}$/) });

@@ -98,7 +98,7 @@ export async function startCheckout(input: StartCheckoutInput): Promise<StartRes
   const phone = input.contact.phone.replace(/^0/, "+233").replace(/^233/, "+233");
   const address = store ? { address_1: `Collect from: ${store.name}`, address_2: store.address } : { address_1: input.delivery.address ?? "", address_2: input.delivery.area ?? "" };
   const person = { first_name: first, last_name: rest.join(" "), country: "GH", ...address };
-  const nonce = randomBytes(4).toString("hex");
+  const nonce = randomBytes(12).toString("hex"); // 96 bits: the reference is the only secret guarding the confirm endpoint
 
   const order: NewOrder = {
     status: "pending",
@@ -181,7 +181,7 @@ export interface FinalizeResult {
 }
 
 export async function finalizeByReference(reference: string): Promise<FinalizeResult> {
-  const m = /^WD-(\d+)-([a-f0-9]{8})$/.exec(reference);
+  const m = /^WD-(\d+)-([a-f0-9]{8,32})$/.exec(reference);
   if (!m) throw new CheckoutError(400, "bad_reference", "Unknown payment reference.");
   const orderId = Number(m[1]);
 

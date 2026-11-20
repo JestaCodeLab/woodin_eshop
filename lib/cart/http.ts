@@ -1,6 +1,8 @@
 import "server-only";
 import { unstable_rethrow } from "next/navigation";
 import type { ZodType } from "zod";
+import { isSameOrigin } from "@/lib/http-guard";
+import { rateLimit } from "@/lib/rate-limit";
 import { cartBackend, CartError, type Cart, type CartBackend } from "./index";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -36,9 +38,12 @@ export async function cartMutate<T>(
   schema: ZodType<T>,
   run: (backend: CartBackend, input: T) => Promise<Cart>,
 ): Promise<Response> {
-  const origin = req.headers.get("origin");
-  if (origin && new URL(origin).host !== req.headers.get("host")) {
+  if (!isSameOrigin(req)) {
     return Response.json({ error: "forbidden_origin" }, { status: 403, headers: NO_STORE });
+  }
+  // Per-IP brake (per server instance). Generous: a shopper never gets near it.
+  if (rateLimit(req, "cart", 120, 60_000)) {
+    return Response.json({ error: "too_many_requests", message: "Too many requests. Please wait a moment." }, { status: 429, headers: NO_STORE });
   }
   if (!req.headers.get("content-type")?.includes("application/json")) {
     return Response.json({ error: "unsupported_media_type" }, { status: 415, headers: NO_STORE });

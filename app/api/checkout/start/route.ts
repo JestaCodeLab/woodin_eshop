@@ -5,7 +5,7 @@ import { paymentsEnabled } from "@/lib/payments-config";
 
 /** POST /api/checkout/start: creates the pending WooCommerce order and the Paystack transaction. */
 export async function POST(req: Request) {
-  const blocked = guardBrowserPost(req);
+  const blocked = guardBrowserPost(req, { scope: "checkout-start", max: 8, windowMs: 10 * 60_000 });
   if (blocked) return blocked;
   if (!paymentsEnabled()) return json({ error: "payments_disabled", message: "Online payment is not available yet." }, 503);
 
