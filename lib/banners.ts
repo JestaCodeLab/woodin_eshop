@@ -35,6 +35,10 @@ const bannerSchema = z.object({
     height: z.number().int().positive(),
     alt: z.string().default(""),
   }),
+  /** Phone version (a separate upload, or the desktop photo cropped tall). Falls back to the desktop image. */
+  mobileImage: z
+    .object({ url: z.string().url(), width: z.number().int().positive(), height: z.number().int().positive() })
+    .nullish(),
 });
 
 export type ShopBanner = z.infer<typeof bannerSchema>;
@@ -69,8 +73,13 @@ export async function getShopBanners(section: BannerSection): Promise<ShopBanner
   for (const item of raw) {
     const parsed = bannerSchema.safeParse(item);
     if (!parsed.success || parsed.data.section !== section) continue;
-    const img = new URL(parsed.data.image.url);
-    if (img.host !== host || !img.pathname.startsWith("/wp-content/uploads/")) continue;
+    const ours = (u: string) => {
+      const x = new URL(u);
+      return x.host === host && x.pathname.startsWith("/wp-content/uploads/");
+    };
+    if (!ours(parsed.data.image.url)) continue;
+    // A phone image from elsewhere is ignored, not fatal: the desktop image is used instead.
+    if (parsed.data.mobileImage && !ours(parsed.data.mobileImage.url)) parsed.data.mobileImage = null;
     out.push(parsed.data);
   }
   return out.slice(0, 2);
