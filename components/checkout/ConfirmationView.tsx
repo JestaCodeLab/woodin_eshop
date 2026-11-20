@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isReference } from "@/lib/checkout/reference";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/Button";
 import { LogoLoader } from "@/components/ui/LogoLoader";
@@ -26,7 +27,7 @@ export function ConfirmationView() {
   const cleared = useRef(false);
 
   useEffect(() => {
-    if (!/^WD-\d+-[a-f0-9]{8}$/.test(reference)) return;
+    if (!isReference(reference)) return;
     let stop = false;
     let tries = 0;
 
@@ -68,7 +69,7 @@ export function ConfirmationView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reference]);
 
-  if (!/^WD-\d+-[a-f0-9]{8}$/.test(reference)) {
+  if (!isReference(reference)) {
     return (
       <Message title="We could not find that order" body="The payment link looks incomplete. If you were charged, check your email for the receipt.">
         <Button href="/shop" variant="primary">Back to the shop</Button>

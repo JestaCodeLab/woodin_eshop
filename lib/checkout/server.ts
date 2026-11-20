@@ -11,6 +11,7 @@ import { initializeTransaction, verifyTransaction } from "@/lib/paystack";
 import { isLivePaystackKey, paystackChannels } from "@/lib/payments-config";
 import { SITE_URL } from "@/lib/site";
 import { getStores } from "@/lib/stores";
+import { REFERENCE_PATTERN } from "./reference";
 import type { StartCheckoutInput } from "./schemas";
 
 /** Thrown for problems the customer can understand (shown as-is). Everything else is a generic 500. */
@@ -181,7 +182,7 @@ export interface FinalizeResult {
 }
 
 export async function finalizeByReference(reference: string): Promise<FinalizeResult> {
-  const m = /^WD-(\d+)-([a-f0-9]{8,32})$/.exec(reference);
+  const m = REFERENCE_PATTERN.exec(reference);
   if (!m) throw new CheckoutError(400, "bad_reference", "Unknown payment reference.");
   const orderId = Number(m[1]);
 
