@@ -40,7 +40,8 @@ function safeUrl(raw: string | undefined, base: string): string | null {
   if (!raw) return null;
   let u = decodeEntities(raw).trim();
   if (OLD_HOST.test(u)) u = `${base}${NEW_PATH}${u.replace(OLD_HOST, "")}`;
-  return /^(https?:\/\/|\/(?!\/))/i.test(u) ? u : null;
+  // Site-relative paths must not start with "//" or "/\": browsers read both as a protocol-relative URL to another host.
+  return /^(https?:\/\/|\/(?![/\\]))/i.test(u) ? u : null;
 }
 
 const YOUTUBE = /^https:\/\/(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)\/embed\/[\w-]+/i;

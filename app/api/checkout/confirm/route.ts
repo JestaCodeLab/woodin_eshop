@@ -9,7 +9,7 @@ import { paymentsEnabled } from "@/lib/payments-config";
  * the confirmation page can poll it while a Mobile Money prompt is still waiting on the phone.
  */
 export async function POST(req: Request) {
-  const blocked = guardBrowserPost(req);
+  const blocked = guardBrowserPost(req, { scope: "checkout-confirm", max: 60, windowMs: 60_000 }); // the page polls every 3s (20/min)
   if (blocked) return blocked;
   if (!paymentsEnabled()) return json({ error: "payments_disabled" }, 503);
 

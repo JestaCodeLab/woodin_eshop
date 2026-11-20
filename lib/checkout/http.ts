@@ -3,6 +3,8 @@ import { unstable_rethrow } from "next/navigation";
 import { CartError } from "@/lib/cart";
 import { OrdersError } from "@/lib/orders";
 import { PaystackError } from "@/lib/paystack";
+import { isSameOrigin } from "@/lib/http-guard";
+import { rateLimit } from "@/lib/rate-limit";
 import { CheckoutError } from "./server";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -13,10 +15,12 @@ export const json = (body: unknown, status = 200) => Response.json(body, { statu
  * Checkout endpoints are cookie-authenticated, so require a JSON content type (a cross-site form
  * cannot send one without a CORS preflight) and a same-origin Origin header.
  */
-export function guardBrowserPost(req: Request): Response | null {
-  const origin = req.headers.get("origin");
-  if (origin && new URL(origin).host !== req.headers.get("host")) return json({ error: "forbidden_origin" }, 403);
+export function guardBrowserPost(req: Request, limit?: { scope: string; max: number; windowMs: number }): Response | null {
+  if (!isSameOrigin(req)) return json({ error: "forbidden_origin" }, 403);
   if (!req.headers.get("content-type")?.includes("application/json")) return json({ error: "unsupported_media_type" }, 415);
+  if (limit && rateLimit(req, limit.scope, limit.max, limit.windowMs)) {
+    return json({ error: "too_many_requests", message: "Too many requests. Please wait a moment and try again." }, 429);
+  }
   return null;
 }
 
