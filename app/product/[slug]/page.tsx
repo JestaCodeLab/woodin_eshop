@@ -59,7 +59,7 @@ async function Related({ product }: { product: Product }) {
   const related = await safely(() => getRelatedProducts(product, 4));
   if (!related || related.length === 0) return null;
   return (
-    <section className="content-wrap pb-24 pt-20 md:pt-[88px]">
+    <section className="content-standard pb-24 pt-20 md:pt-[88px]">
       <h2 className="m-0 mb-8 font-display text-[clamp(32px,4vw,44px)] font-normal">You may also like</h2>
       <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:gap-x-5 lg:grid-cols-4">
         {related.map((p) => (
@@ -121,7 +121,7 @@ async function ProductContent({ params }: { params: PageProps<"/product/[slug]">
           },
         ]}
       />
-      <section className="content-wrap pb-12 pt-6 md:pb-20">
+      <section className="content-standard pb-12 pt-6 md:pb-20">
         <nav aria-label="Breadcrumb" className="label-caps mb-6 tracking-[0.16em] text-muted">
           <Link href="/" className="text-muted">Home</Link> / <Link href="/shop" className="text-muted">Shop</Link>
           {section ? (
@@ -173,7 +173,7 @@ async function ProductContent({ params }: { params: PageProps<"/product/[slug]">
 
 function ProductSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading product" className="content-wrap flex flex-wrap gap-10 py-10">
+    <div aria-busy="true" aria-label="Loading product" className="content-standard flex flex-wrap gap-10 py-10">
       <div className="aspect-[4/5] min-w-0 flex-[999_1_560px] animate-pulse bg-sand" />
       <div className="flex min-w-0 flex-[1_1_400px] flex-col gap-4">
         <div className="h-12 w-3/4 animate-pulse bg-sand" />
