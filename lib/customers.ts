@@ -1,4 +1,7 @@
 import "server-only";
+import { randomBytes } from "node:crypto";
+import { cache } from "react";
+import { z } from "zod";
 import { wc, type WCOrder } from "./orders";
 
 /**
@@ -11,6 +14,7 @@ interface WCCustomer {
   id: number;
   email: string;
   role?: string;
+  date_created_gmt?: string;
   first_name?: string;
   last_name?: string;
   billing?: { first_name?: string; last_name?: string; phone?: string; address_1?: string; address_2?: string };
@@ -47,7 +51,20 @@ export async function findOrCreateCustomer(email: string): Promise<{ id: number;
   return { id: created.id, created: true };
 }
 
-export const getCustomer = (id: number) => wc<WCCustomer>("GET", `/customers/${id}`);
+/** Cached per request: the account shell and each page can ask for the customer without refetching. */
+export const getCustomer = cache((id: number) => wc<WCCustomer>("GET", `/customers/${id}`));
+
+/** "March 2026" from the customer's creation date, or null. */
+export function memberSince(c: WCCustomer): string | null {
+  if (!c.date_created_gmt) return null;
+  const d = new Date(`${c.date_created_gmt}Z`);
+  return Number.isNaN(d.getTime()) ? null : new Intl.DateTimeFormat("en-GH", { month: "long", year: "numeric", timeZone: "Africa/Accra" }).format(d);
+}
+
+export const customerNames = (c: WCCustomer) => ({
+  first: (c.first_name || c.billing?.first_name || "").trim(),
+  last: (c.last_name || c.billing?.last_name || "").trim(),
+});
 
 export interface Profile {
   name: string;
@@ -70,7 +87,9 @@ export async function saveProfile(
   id: number,
   p: { firstName: string; lastName: string; phone: string; address?: string; area?: string },
 ): Promise<void> {
-  const place = p.address ? { address_1: p.address, address_2: p.area ?? "" } : {};
+  // Once the customer manages an address book in their account, checkout must not rewrite it.
+  const hasBook = hasAddressBook(await getCustomer(id));
+  const place = p.address && !hasBook ? { address_1: p.address, address_2: p.area ?? "" } : {};
   await wc("PUT", `/customers/${id}`, {
     first_name: p.firstName,
     last_name: p.lastName,
@@ -93,6 +112,82 @@ function parseIds(raw: unknown): number[] {
 
 export async function getFavorites(id: number): Promise<number[]> {
   return parseIds(metaValue(await getCustomer(id), FAVORITES_KEY));
+}
+
+// --- Addresses -------------------------------------------------------------
+
+const ADDRESSES_KEY = "woodin_addresses";
+export const MAX_ADDRESSES = 10;
+
+const storedAddress = z.object({
+  id: z.string().regex(/^[a-z0-9]{4,20}$/),
+  label: z.string().max(30),
+  name: z.string().max(120),
+  phone: z.string().max(20),
+  address: z.string().max(240),
+  area: z.string().max(160),
+  isDefault: z.boolean(),
+});
+export type Address = z.infer<typeof storedAddress>;
+
+export const newAddressId = () => randomBytes(5).toString("hex");
+
+/** Exactly one default whenever the list is not empty. */
+function withOneDefault(list: Address[]): Address[] {
+  if (list.length === 0) return list;
+  const first = list.findIndex((a) => a.isDefault);
+  const keep = first === -1 ? 0 : first;
+  return list.map((a, i) => ({ ...a, isDefault: i === keep }));
+}
+
+/**
+ * The customer's address book. Before they have saved one here, the address from their last
+ * checkout (WooCommerce billing) is shown as a default "Home", so nothing looks empty.
+ */
+/** True once the customer has saved or edited their address book (even if they later emptied it). */
+export function hasAddressBook(c: WCCustomer): boolean {
+  return typeof metaValue(c, ADDRESSES_KEY) === "string";
+}
+
+export function getAddresses(c: WCCustomer): Address[] {
+  const raw = metaValue(c, ADDRESSES_KEY);
+  if (typeof raw === "string") {
+    try {
+      const parsed = z.array(storedAddress).max(MAX_ADDRESSES).safeParse(JSON.parse(raw));
+      // An empty saved book stays empty: the checkout address must not reappear after they delete it.
+      if (parsed.success) return withOneDefault(parsed.data);
+    } catch {
+      /* unreadable: fall through to the billing address */
+    }
+  }
+  const b = c.billing;
+  if (b?.address_1) {
+    return [{ id: "billing", label: "Home", name: [b.first_name, b.last_name].filter(Boolean).join(" "), phone: b.phone ?? "", address: b.address_1, area: b.address_2 ?? "", isDefault: true }];
+  }
+  return [];
+}
+
+/** Saves the list, and mirrors the default into WooCommerce billing/shipping so staff see it on the order screen. */
+export async function saveAddresses(id: number, list: Address[]): Promise<Address[]> {
+  const clean = withOneDefault(list).slice(0, MAX_ADDRESSES);
+  const patch: Record<string, unknown> = { meta_data: [{ key: ADDRESSES_KEY, value: JSON.stringify(clean) }] };
+  const d = clean.find((a) => a.isDefault);
+  if (d) {
+    const [first = "", ...rest] = d.name.split(" ");
+    const place = { first_name: first, last_name: rest.join(" "), address_1: d.address, address_2: d.area, country: "GH" };
+    patch.billing = { ...place, phone: d.phone };
+    patch.shipping = place;
+  }
+  await wc("PUT", `/customers/${id}`, patch);
+  return clean;
+}
+
+export async function updateProfile(id: number, p: { firstName: string; lastName: string; phone: string }): Promise<void> {
+  await wc("PUT", `/customers/${id}`, {
+    first_name: p.firstName,
+    last_name: p.lastName,
+    billing: { first_name: p.firstName, last_name: p.lastName, phone: p.phone, country: "GH" },
+  });
 }
 
 export async function setFavorites(id: number, ids: number[]): Promise<void> {
@@ -124,7 +219,7 @@ export async function saveCart(id: number, lines: SavedLine[]): Promise<void> {
 // --- Orders ----------------------------------------------------------------
 
 /** Paid-or-progressing orders for this customer, newest first. Unpaid checkout attempts are hidden. */
-export async function listOrders(customerId: number): Promise<WCOrder[]> {
+export const listOrders = cache(async (customerId: number): Promise<WCOrder[]> => {
   const orders = await wc<WCOrder[]>("GET", `/orders?customer=${customerId}&per_page=30&orderby=date&order=desc`);
   return orders.filter((o) => !["pending", "failed", "trash", "checkout-draft"].includes(o.status));
-}
+});

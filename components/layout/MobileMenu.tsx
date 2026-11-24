@@ -35,7 +35,7 @@ export function MobileMenu({ note, accounts = false }: { note: string; accounts?
     dialog.current?.close();
   }, [pathname, cat]);
 
-  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : pathname === "/insights" || pathname.startsWith("/insights/") ? "insights" : pathname === "/track" ? "track" : pathname === "/account" ? "account" : null;
+  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : pathname === "/insights" || pathname.startsWith("/insights/") ? "insights" : pathname === "/track" ? "track" : pathname === "/account" || pathname.startsWith("/account/") ? "account" : null;
   const close = () => dialog.current?.close();
 
   return (

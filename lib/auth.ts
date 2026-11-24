@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { ordersBase } from "./orders";
 import { ordersConfigured } from "./payments-config";
 
@@ -70,7 +71,11 @@ export async function getSession(): Promise<Session | null> {
   const key = secret();
   if (!key) return null;
   const raw = (await cookies()).get(COOKIE)?.value;
-  return raw ? decode(raw, key) : null;
+  if (!raw) return null;
+  // Checking the expiry compares against the current time. Next refuses unstable values while it
+  // prerenders or prefetches a page, so wait until a real request is being served.
+  await connection();
+  return decode(raw, key);
 }
 
 export async function startSession(customerId: number, email: string): Promise<void> {

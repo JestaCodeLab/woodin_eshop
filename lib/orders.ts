@@ -80,7 +80,7 @@ export interface WCOrder {
   date_paid_gmt?: string | null;
   meta_data: { id?: number; key: string; value: unknown }[];
   billing?: { first_name?: string; last_name?: string; email?: string; phone?: string };
-  line_items?: { name: string; quantity: number }[];
+  line_items?: { name: string; quantity: number; product_id?: number; image?: { src?: string } | null }[];
   shipping_lines: { method_id?: string; method_title: string }[];
   /** Refunds on the order. `total` is a negative amount string, e.g. "-50.00". */
   refunds?: { id: number; reason?: string; total: string }[];

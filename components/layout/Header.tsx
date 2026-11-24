@@ -5,8 +5,10 @@ import { BagLink } from "@/components/cart/BagLink";
 import { accountsEnabled } from "@/lib/auth";
 import { freeDeliveryLabel } from "@/lib/config";
 import { LOGO } from "@/lib/images";
-import { MenuIcon, UserIcon } from "@/components/ui/icons";
+import { MenuIcon } from "@/components/ui/icons";
 import { HeaderSearch } from "./HeaderSearch";
+import { UserMenu } from "./UserMenu";
+import { SignInLink } from "./UserMenuDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 import { NavList } from "./NavList";
@@ -72,12 +74,15 @@ export function Header({ variant = "solid" }: HeaderProps) {
           <div className="flex items-center justify-end gap-0.5">
             {/* Phones keep only the bag here: search and account live in the menu drawer. */}
             <HeaderSearch className={`${iconBtn} max-md:hidden`} />
-            {accounts ? (
-              <Link href="/account" aria-label="My account" className={`${iconBtn} max-md:hidden`}>
-                <UserIcon size={22} />
-              </Link>
-            ) : null}
             <BagLink />
+            {/* After the bag: the profile menu. Desktop only; phones have My account in the menu drawer. */}
+            {accounts ? (
+              <div className="max-md:hidden">
+                <Suspense fallback={<SignInLink />}>
+                  <UserMenu />
+                </Suspense>
+              </div>
+            ) : null}
           </div>
         </div>
 
