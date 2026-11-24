@@ -87,7 +87,7 @@ async function ShopContent({ searchParams }: { searchParams: PageProps<"/shop">[
           <nav aria-label="Breadcrumb" className="label-caps text-muted tracking-[0.16em]">
             <Link href="/" className="text-muted">Home</Link> / {params.cat ? <><Link href="/shop" className="text-muted">Shop</Link> / {sectionLabel(params.cat)}</> : "Shop"}
           </nav>
-          <h1 className="m-0 font-display text-[clamp(44px,7vw,84px)] font-normal leading-[0.95] text-brown">
+          <h1 className="m-0 font-display text-[clamp(30px,4vw,48px)] font-normal leading-[1] text-brown">
             {sectionLabel(params.cat)}
           </h1>
         </div>

@@ -28,7 +28,6 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     title: "Stores",
     links: [
       { label: "Store locator", href: "/stores" },
-      { label: "Click & collect", href: "/stores" },
       { label: "Wholesale enquiries", href: "#" },
     ],
   },

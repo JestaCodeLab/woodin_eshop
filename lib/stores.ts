@@ -41,7 +41,7 @@ export interface Store extends Omit<z.infer<typeof storeSchema>, "id"> {
   id: string;
 }
 
-const DEFAULT_SERVICES = ["Click & collect", "Ready To Wear", "Fabrics by the piece", "Exchanges and returns"];
+const DEFAULT_SERVICES = ["Ready To Wear", "Fabrics by the piece", "Exchanges and returns"];
 
 /** Shown only when STORES_JSON is missing or has no valid store. All values are placeholders. */
 const PLACEHOLDER_STORES: Store[] = [

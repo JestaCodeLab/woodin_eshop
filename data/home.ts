@@ -12,7 +12,6 @@ export const SHOP_THE_LOOK_IDS = [313, 312, 315];
 export const SERVICES = [
   { icon: "pay", title: "Pay your way", body: "MTN MoMo, Telecel Cash, AT Money or card, secured by Paystack." },
   { icon: "delivery", title: "Delivery across Ghana", body: "Fast delivery in Accra and to every region, sent with Ghana Post and tracked to your door." },
-  { icon: "collect", title: "Click & collect", body: "Order online and collect free at a Woodin store." },
   { icon: "exchange", title: "Easy exchanges", body: "Wrong size? Exchange in store within 3 business days." },
 ] as const;
 

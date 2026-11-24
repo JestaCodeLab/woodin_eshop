@@ -14,3 +14,12 @@ export function freeDeliveryLabel(): string {
   const t = freeDeliveryThreshold();
   return t === null ? "GH₵ [X]" : formatMoney(t, "GHS");
 }
+
+/**
+ * Click & collect is not launched yet. While this is off, checkout never offers store pickup (the
+ * server refuses it too) and no page mentions it. Set CLICK_COLLECT_ENABLED=true when it is ready,
+ * then restore the copy that was removed (topbar, footer, product page, bag, home services, stores page).
+ */
+export function clickCollectEnabled(): boolean {
+  return process.env.CLICK_COLLECT_ENABLED === "true";
+}

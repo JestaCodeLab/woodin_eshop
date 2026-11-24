@@ -1,8 +1,6 @@
-import Link from "next/link";
-
 const ICON = "mt-0.5 shrink-0 text-brown";
 
-/** Delivery / click & collect / payment reassurance rows (copy from the design). */
+/** Delivery / payment reassurance rows (copy from the design). */
 export function InfoBlocks() {
   return (
     <ul className="m-0 flex list-none flex-col border border-line bg-white p-0 text-sm font-light leading-[1.55]">
@@ -12,16 +10,6 @@ export function InfoBlocks() {
         </svg>
         <span>
           <span className="font-medium">Delivery</span> — order within [X] hrs for Accra delivery by [DAY].
-        </span>
-      </li>
-      <li className="flex gap-3.5 border-b border-line px-[18px] py-4">
-        <svg aria-hidden="true" className={ICON} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-          <path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z" />
-          <circle cx="12" cy="10" r="2.5" />
-        </svg>
-        <span>
-          <span className="font-medium">Click &amp; collect</span> — free, in stock at [STORE NAME].{" "}
-          <Link href="/stores">Find a store</Link>
         </span>
       </li>
       <li className="flex gap-3.5 px-[18px] py-4">

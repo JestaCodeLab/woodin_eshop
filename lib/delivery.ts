@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 import { ZONES } from "./checkout-config";
+import { clickCollectEnabled } from "./config";
 import { getShippingMethods, getShippingZones } from "./orders";
 import { paymentsEnabled } from "./payments-config";
 
@@ -69,7 +70,7 @@ const slugFor = (z: ZoneInfo) => `zone-${z.id}`;
  */
 export async function getDeliveryOptions(): Promise<DeliveryOption[]> {
   const fallback = (demo: boolean): DeliveryOption[] =>
-    ZONES.map((z) => ({ id: z.id, name: z.name, short: z.short, eta: z.eta, fee: demo ? DEMO_FEES[z.id] : z.fee, freeEligible: z.id === "accra", demo }));
+    ZONES.filter((z) => z.id !== "store" || clickCollectEnabled()).map((z) => ({ id: z.id, name: z.name, short: z.short, eta: z.eta, fee: demo ? DEMO_FEES[z.id] : z.fee, freeEligible: z.id === "accra", demo }));
 
   if (!paymentsEnabled()) return fallback(false);
 
@@ -90,7 +91,7 @@ export async function getDeliveryOptions(): Promise<DeliveryOption[]> {
     .sort((a, b) => a.order - b.order || a.id - b.id)
     .map((z) => ({ id: slugFor(z), name: z.name, short: z.name, eta: "", fee: z.flat, freeEligible: /accra/i.test(z.name), demo: false }));
 
-  const pickup = zones.find((z) => z.pickup !== null);
+  const pickup = clickCollectEnabled() ? zones.find((z) => z.pickup !== null) : undefined;
   if (pickup) {
     const store = ZONES.find((z) => z.id === "store")!;
     options.push({ id: "store", name: store.name, short: store.short, eta: process.env.PICKUP_READY_TEXT?.trim() || "Ready for collection in store", fee: pickup.pickup, freeEligible: false, demo: false });

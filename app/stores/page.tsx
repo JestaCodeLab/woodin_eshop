@@ -44,9 +44,8 @@ export default function StoresPage() {
           <div aria-hidden="true" className="absolute inset-0 bg-[rgba(26,18,14,0.45)]" />
           <div className="relative flex flex-col items-center gap-[18px] px-4 py-16 text-center text-ivory">
             <h2 className="m-0 font-display text-[clamp(34px,5vw,54px)] font-normal leading-[1.05]">
-              Order online, <span className="italic">collect in store</span>
+              Shop Woodin <span className="italic">online</span>
             </h2>
-            <p className="m-0 text-[19px] font-light">Free click &amp; collect at every Woodin store. Ready in [X] hours.</p>
             <Button href="/shop" variant="ivory" className="px-[34px] py-[18px]">
               Start shopping
             </Button>

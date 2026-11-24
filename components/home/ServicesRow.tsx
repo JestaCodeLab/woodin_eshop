@@ -5,7 +5,7 @@ const ICONS = { pay: WalletIcon, delivery: TruckIcon, collect: StoreIcon, exchan
 export function ServicesRow({ services }: { services: readonly { icon: keyof typeof ICONS; title: string; body: string }[] }) {
   return (
     <section aria-label="Services" className="border-y border-line">
-      <ul className="content-wrap m-0 grid list-none gap-7 py-10 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className={`content-wrap m-0 grid list-none gap-7 py-10 sm:grid-cols-2 ${services.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}>
         {services.map((s) => {
           const Icon = ICONS[s.icon];
           return (

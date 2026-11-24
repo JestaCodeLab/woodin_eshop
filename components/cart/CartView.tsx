@@ -49,7 +49,7 @@ export function CartView({ threshold }: { threshold: number | null }) {
   return (
     <>
       <section className="content-wrap flex flex-wrap items-end justify-between gap-4 pb-6 pt-10 md:pt-14">
-        <h1 className="m-0 font-display text-[clamp(40px,6vw,76px)] font-normal leading-none text-brown">
+        <h1 className="m-0 font-display text-[clamp(30px,4vw,48px)] font-normal leading-none text-brown">
           Your bag <span className="text-[0.45em] italic text-muted">({count})</span>
         </h1>
         <Link href="/shop" className="label-caps py-3 text-ink">
@@ -195,7 +195,6 @@ export function CartView({ threshold }: { threshold: number | null }) {
 
           <ul className="m-0 flex list-none flex-col gap-2.5 border-t border-line p-0 pt-4 text-[13px] font-light text-body">
             <li>✓ Secure payment by Paystack</li>
-            <li>✓ Free click &amp; collect at any Woodin store</li>
             <li>✓ Size exchanges in store within 3 business days</li>
           </ul>
         </aside>
