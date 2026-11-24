@@ -46,7 +46,7 @@ export function ProfileForm({ initial }: { initial: { firstName: string; lastNam
         <div className="flex flex-col gap-1.5"><label htmlFor="ad-last" className={label}>Last name</label><input id="ad-last" autoComplete="family-name" value={v.lastName} onChange={on("lastName")} className={field} /></div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ad-email" className={label}>Email</label>
-          <input id="ad-email" type="email" value={v.email} readOnly aria-describedby="ad-email-note" className={`${field} bg-sand text-body`} />
+          <input id="ad-email" type="email" value={v.email} disabled aria-describedby="ad-email-note" className={`${field.replace("bg-white", "bg-sand")} cursor-not-allowed text-muted`} />
           <span id="ad-email-note" className="text-[13px] font-light text-muted">This is how you sign in, so it cannot be changed here.</span>
         </div>
         <div className="flex flex-col gap-1.5"><label htmlFor="ad-phone" className={label}>Phone (for MoMo &amp; delivery)</label><input id="ad-phone" type="tel" autoComplete="tel" placeholder="024 000 0000" value={v.phone} onChange={on("phone")} className={field} /></div>
