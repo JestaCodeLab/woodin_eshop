@@ -23,7 +23,7 @@ function validSignature(body: string, signature: string | null, secret: string):
 
 export async function POST(req: Request) {
   const secret = process.env.WC_WEBHOOK_SECRET ?? process.env.REVALIDATE_SECRET;
-  if (!secret) {
+  if (!secret || secret === "change-me") {
     console.error("[wc webhook] WC_WEBHOOK_SECRET is not set");
     return Response.json({ error: "not_configured" }, { status: 500 });
   }

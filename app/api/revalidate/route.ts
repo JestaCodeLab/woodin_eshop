@@ -20,7 +20,8 @@ function validSignature(body: string, signature: string | null, secret: string):
 
 export async function POST(req: Request) {
   const secret = process.env.REVALIDATE_SECRET;
-  if (!secret) {
+  // "change-me" is the .env.example placeholder: treat it as not configured, never as a real secret.
+  if (!secret || secret === "change-me") {
     console.error("[revalidate] REVALIDATE_SECRET is not set");
     return Response.json({ error: "not_configured" }, { status: 500 });
   }

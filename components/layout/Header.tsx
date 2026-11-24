@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { BagLink } from "@/components/cart/BagLink";
+import { accountsEnabled } from "@/lib/auth";
 import { freeDeliveryLabel } from "@/lib/config";
 import { LOGO } from "@/lib/images";
-import { MenuIcon } from "@/components/ui/icons";
+import { MenuIcon, UserIcon } from "@/components/ui/icons";
 import { HeaderSearch } from "./HeaderSearch";
 import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
@@ -20,7 +21,8 @@ const iconBtn = "flex h-11 w-11 items-center justify-center";
 export function Header({ variant = "solid" }: HeaderProps) {
   const overlay = variant === "overlay";
   const logo = overlay ? LOGO.white : LOGO.brown;
-  const announcement = `Free Accra delivery over ${freeDeliveryLabel()} · Pay with Mobile Money · Click & collect in store`;
+  const accounts = accountsEnabled();
+  const announcement = `Free Accra delivery over ${freeDeliveryLabel()} · Pay with Mobile Money`;
 
   return (
     <header className={overlay ? "w-full text-white" : "w-full bg-ivory text-ink"}>
@@ -39,7 +41,7 @@ export function Header({ variant = "solid" }: HeaderProps) {
                 </span>
               }
             >
-              <MobileMenu note={announcement} />
+              <MobileMenu note={announcement} accounts={accounts} />
             </Suspense>
             <Link href="/track" className="hidden items-center px-2 py-3 text-xs uppercase tracking-[0.14em] md:flex">
               Track your order
@@ -47,18 +49,34 @@ export function Header({ variant = "solid" }: HeaderProps) {
           </div>
 
           <Link href="/" aria-label="Woodin, Le créateur: shop home" className="block leading-none">
+            {/* Phones: the W mark alone (brown, or white over the hero). md and up: the full logo. */}
+            <Image
+              src={LOGO.mark.src}
+              width={LOGO.mark.width}
+              height={LOGO.mark.height}
+              alt="Woodin Le créateur"
+              priority
+              className={`h-9 w-auto md:hidden ${overlay ? "brightness-0 invert" : ""}`}
+            />
             <Image
               src={logo.src}
               width={logo.width}
               height={logo.height}
-              alt="Woodin Le créateur"
+              alt=""
+              aria-hidden="true"
               priority
-              className="h-10 w-auto md:h-[52px]"
+              className="hidden h-[52px] w-auto md:block"
             />
           </Link>
 
           <div className="flex items-center justify-end gap-0.5">
-            <HeaderSearch className={iconBtn} />
+            {/* Phones keep only the bag here: search and account live in the menu drawer. */}
+            <HeaderSearch className={`${iconBtn} max-md:hidden`} />
+            {accounts ? (
+              <Link href="/account" aria-label="My account" className={`${iconBtn} max-md:hidden`}>
+                <UserIcon size={22} />
+              </Link>
+            ) : null}
             <BagLink />
           </div>
         </div>

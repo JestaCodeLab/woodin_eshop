@@ -23,7 +23,7 @@ export class OrdersError extends Error {
   }
 }
 
-function base(): string {
+export function ordersBase(): string {
   const raw = process.env.WC_ORDERS_URL?.trim();
   if (!raw) throw new OrdersError(500, "WC_ORDERS_URL is not set");
   const url = new URL(raw);
@@ -37,7 +37,7 @@ function base(): string {
   return url.origin;
 }
 
-async function wc<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknown): Promise<T> {
+export async function wc<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
   const creds = wcCredentials();
   if (!creds) throw new OrdersError(500, "WooCommerce API credentials are not set");
 
@@ -45,7 +45,10 @@ async function wc<T>(method: "GET" | "POST" | "PUT", path: string, body?: unknow
   try {
     // `?rest_route=` works whatever the site's permalink/rewrite setup: the live site answers
     // /wp-json/wc/v3/* with "no route" but serves this form.
-    res = await fetch(`${base()}/?rest_route=/wc/v3${path}`, {
+    // A query string in `path` must become a real query parameter: left inside the rest_route value
+    // WordPress looks for a route literally named "/customers?email=…" and answers "No route was found".
+    const [route, query] = path.split("?", 2);
+    res = await fetch(`${ordersBase()}/?rest_route=/wc/v3${route}${query ? `&${query}` : ""}`, {
       method,
       headers: {
         Authorization: `Basic ${Buffer.from(`${creds.key}:${creds.secret}`).toString("base64")}`,
@@ -91,6 +94,8 @@ export const orderMeta = (o: WCOrder, key: string): string | undefined => {
 
 export interface NewOrder {
   status: "pending";
+  /** WooCommerce customer id: attaches the order to a signed-in account. */
+  customer_id?: number;
   currency: "GHS";
   payment_method: string;
   payment_method_title: string;

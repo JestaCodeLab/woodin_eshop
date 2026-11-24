@@ -1,10 +1,11 @@
 "use client";
 
-import { MapPin, Mars, Menu, Newspaper, PackageSearch, Scissors, Venus, X, type LucideIcon } from "lucide-react";
+import { MapPin, Mars, Newspaper, PackageSearch, Scissors, Search, UserRound, Venus, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { MenuIcon } from "@/components/ui/icons";
 import { LOGO } from "@/lib/images";
 import { shopHref } from "@/lib/links";
 
@@ -16,13 +17,14 @@ const LINKS: { key: string; label: string; href: string; Icon: LucideIcon }[] = 
   { key: "stores", label: "Find a store", href: "/stores", Icon: MapPin },
   { key: "track", label: "Track your order", href: "/track", Icon: PackageSearch },
 ];
+const ACCOUNT_LINK = { key: "account", label: "My account / Sign in", href: "/account", Icon: UserRound };
 
 /**
  * Phone menu: a hamburger that opens a slide-in drawer with the three shop sections and
  * "Find a store". Built on the native <dialog> element, so the browser provides the focus trap,
  * Esc to close, and makes the page behind inert. Hidden from md up (the desktop nav takes over).
  */
-export function MobileMenu({ note }: { note: string }) {
+export function MobileMenu({ note, accounts = false }: { note: string; accounts?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -33,7 +35,7 @@ export function MobileMenu({ note }: { note: string }) {
     dialog.current?.close();
   }, [pathname, cat]);
 
-  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : pathname === "/insights" || pathname.startsWith("/insights/") ? "insights" : pathname === "/track" ? "track" : null;
+  const active = pathname === "/shop" ? cat : pathname === "/stores" ? "stores" : pathname === "/insights" || pathname.startsWith("/insights/") ? "insights" : pathname === "/track" ? "track" : pathname === "/account" ? "account" : null;
   const close = () => dialog.current?.close();
 
   return (
@@ -49,7 +51,7 @@ export function MobileMenu({ note }: { note: string }) {
         }}
         className="flex h-11 w-11 items-center justify-center"
       >
-        <Menu size={24} strokeWidth={1.5} aria-hidden="true" />
+        <MenuIcon size={24} />
       </button>
 
       <dialog
@@ -70,8 +72,25 @@ export function MobileMenu({ note }: { note: string }) {
             </button>
           </div>
 
-          <nav aria-label="Menu" className="mt-6 flex flex-col border-t border-line">
-            {LINKS.map(({ key, label, href, Icon }) => {
+          {/* Search lives here on phones. A plain GET form to /shop?q=, like the desktop search. */}
+          <form action="/shop" method="get" role="search" onSubmit={close} className="mt-5 flex h-12 border border-line-strong bg-white">
+            <label htmlFor="menu-search" className="sr-only">Search products by name or code</label>
+            <input
+              id="menu-search"
+              type="search"
+              name="q"
+              required
+              autoComplete="off"
+              placeholder="Search by name or code"
+              className="min-w-0 flex-1 bg-transparent px-4 text-base outline-none placeholder:text-muted"
+            />
+            <button type="submit" aria-label="Search" className="flex w-12 shrink-0 items-center justify-center text-brown">
+              <Search size={20} strokeWidth={1.5} aria-hidden="true" />
+            </button>
+          </form>
+
+          <nav aria-label="Menu" className="mt-4 flex flex-col border-t border-line">
+            {(accounts ? [...LINKS, ACCOUNT_LINK] : LINKS).map(({ key, label, href, Icon }) => {
               const on = active === key;
               return (
                 <Link

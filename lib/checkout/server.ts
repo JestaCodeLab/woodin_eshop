@@ -1,6 +1,9 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { after } from "next/server";
+import { getSession } from "@/lib/auth";
+import { saveProfile } from "@/lib/customers";
 import { cartBackend, CartError, type Cart } from "@/lib/cart";
 import { freeDeliveryThreshold } from "@/lib/config";
 import { getDeliveryOptions, type DeliveryOption } from "@/lib/delivery";
@@ -101,8 +104,13 @@ export async function startCheckout(input: StartCheckoutInput): Promise<StartRes
   const person = { first_name: first, last_name: rest.join(" "), country: "GH", ...address };
   const nonce = randomBytes(12).toString("hex"); // 96 bits: the reference is the only secret guarding the confirm endpoint
 
+  // Signed-in customers: the order belongs to their account (order history). The customer id comes
+  // from the signed session, never from the request body.
+  const session = await getSession();
+
   const order: NewOrder = {
     status: "pending",
+    ...(session ? { customer_id: session.customerId } : {}),
     currency: "GHS",
     payment_method: "paystack",
     payment_method_title: "Paystack (Mobile Money / Card)",
@@ -133,6 +141,10 @@ export async function startCheckout(input: StartCheckoutInput): Promise<StartRes
   };
 
   const created = await createOrder(order);
+  if (session) {
+    // Remember the details for next time (best effort: never blocks the payment).
+    after(() => saveProfile(session.customerId, { firstName: first, lastName: rest.join(" "), phone, address: store ? undefined : input.delivery.address, area: store ? undefined : input.delivery.area }).catch(() => undefined));
+  }
   const reference = `WD-${created.id}-${nonce}`;
 
   let tx;

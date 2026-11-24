@@ -108,30 +108,77 @@ function woodin_send_status_email($order_id, $kind)
     $name    = $order->get_billing_first_name() ?: 'there';
     $number  = $order->get_id();
     $track   = defined('WOODIN_TRACK_URL') ? WOODIN_TRACK_URL : 'https://www.woodinfashion.store/track';
+    $trackUrl = add_query_arg('order', $number, $track);
     $code    = trim((string) $order->get_meta('woodin_tracking_number'));
+
+    $ship    = $order->get_shipping_methods();
+    $ship    = $ship ? reset($ship) : null;
+    $deliv   = $ship ? $ship->get_name() : '';
+    $items   = [];
+    foreach ($order->get_items() as $item) {
+        $items[] = ['name' => $item->get_name(), 'qty' => $item->get_quantity()];
+    }
+    $total   = html_entity_decode(wp_strip_all_tags($order->get_formatted_order_total()), ENT_QUOTES, 'UTF-8');
+    $facts   = ['Order number' => "#$number"];
 
     if ($kind === 'cancelled') {
         if (!$order->get_date_paid()) {
             return; // never paid (e.g. auto-cancelled unpaid order): do not email
         }
         $subject = "Your Woodin order #$number was cancelled";
-        $lines   = ["Hello $name. Your order #$number has been cancelled. If you did not ask for this, please contact us."];
+        $intro   = "Hello $name. Your order #$number has been cancelled. If you did not ask for this, please contact us and we will help.";
+        $plain   = [$intro];
+        $mail    = [
+            'preheader' => "Order #$number was cancelled.",
+            'eyebrow'   => 'Order update',
+            'heading'   => 'Your order was cancelled',
+            'intro'     => $intro,
+            'body_html' => function_exists('woodin_email_facts') ? woodin_email_facts($facts + ['Order total' => $total]) : '',
+            'outro'     => 'Questions about your order or a refund? Just reply to this email.',
+        ];
     } elseif ($kind === 'shipped') {
         $subject = "Your Woodin order #$number has shipped";
-        $lines   = ["Good news, $name. Your order #$number has been handed to Ghana Post."];
+        $intro   = "Good news, $name. Your order #$number has been handed to Ghana Post and is on its way to you.";
+        $plain   = [$intro];
         if ($code !== '') {
-            $lines[] = "Ghana Post tracking number: $code";
+            $plain[] = "Ghana Post tracking number: $code";
         }
+        $facts  += ['Carrier' => 'Ghana Post', 'Tracking number' => $code, 'Delivery' => $deliv, 'Order total' => $total];
+        $mail    = [
+            'preheader' => "Order #$number is on its way with Ghana Post.",
+            'eyebrow'   => 'On its way',
+            'heading'   => 'Your order has shipped',
+            'intro'     => $intro,
+            'button'    => ['label' => 'Track your order', 'url' => $trackUrl],
+            'outro'     => 'Delivery times depend on Ghana Post. You will also get a text message when your order arrives.',
+        ];
     } else {
         $subject = "Your Woodin order #$number is ready for collection";
-        $lines   = ["Good news, $name. Your order #$number is ready for collection in store. Please bring your order number."];
+        $intro   = "Good news, $name. Your order #$number is ready for collection in store. Please bring your order number.";
+        $plain   = [$intro];
+        $facts  += ['Collect from' => preg_replace('/^[^:]*:\s*/', '', $deliv), 'Order total' => $total];
+        $mail    = [
+            'preheader' => "Order #$number is ready for collection.",
+            'eyebrow'   => 'Ready for collection',
+            'heading'   => 'Your order is ready',
+            'intro'     => $intro,
+            'button'    => ['label' => 'View your order', 'url' => $trackUrl],
+            'outro'     => 'Please bring your order number when you come to collect.',
+        ];
     }
     if ($kind !== 'cancelled') {
-        $lines[] = "Follow your order any time: $track";
+        $plain[] = "Follow your order any time: $trackUrl";
     }
-    $lines[] = "Thank you for shopping with Woodin.";
+    $plain[] = "Thank you for shopping with Woodin.";
 
-    wp_mail($order->get_billing_email(), $subject, implode("\n\n", $lines));
+    if (function_exists('woodin_email_send')) { // branded HTML (woodin-email-template.php)
+        if ($kind !== 'cancelled') {
+            $mail['body_html'] = woodin_email_facts($facts) . woodin_email_items($items);
+        }
+        woodin_email_send($order->get_billing_email(), $subject, $mail, implode("\n\n", $plain));
+    } else {
+        wp_mail($order->get_billing_email(), $subject, implode("\n\n", $plain));
+    }
     $order->update_meta_data($flag, '1');
     $order->save();
 }

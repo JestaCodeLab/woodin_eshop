@@ -1,20 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useFavorites } from "@/components/account/FavoritesProvider";
 import { HeartIcon } from "@/components/ui/icons";
 
-/**
- * Heart toggle on product cards. Local state only: the pitch has no wishlist backend.
- * TODO: persist (localStorage or WC wishlist plugin), see TODO.md.
- */
-export function WishlistButton({ title }: { title: string }) {
-  const [saved, setSaved] = useState(false);
+/** Heart toggle on product cards. Saved to the customer's account; guests are sent to sign in. */
+export function WishlistButton({ productId, title }: { productId: number; title: string }) {
+  const { ids, toggle } = useFavorites();
+  const saved = ids.has(productId);
   return (
     <button
       type="button"
-      aria-label={`Save ${title} to wishlist`}
+      aria-label={saved ? `Remove ${title} from favorites` : `Save ${title} to favorites`}
       aria-pressed={saved}
-      onClick={() => setSaved((s) => !s)}
+      onClick={() => void toggle(productId)}
       className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center"
     >
       <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-ivory text-brown">

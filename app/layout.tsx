@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Serif_Display, Jost } from "next/font/google";
+import { FavoritesProvider } from "@/components/account/FavoritesProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Footer } from "@/components/layout/Footer";
 import { PageLoader } from "@/components/layout/PageLoader";
@@ -78,8 +79,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <PageLoader />
         <CartProvider>
-          <div className="flex-1">{children}</div>
-          <Footer />
+          <FavoritesProvider>
+            <div className="flex-1">{children}</div>
+            <Footer />
+          </FavoritesProvider>
         </CartProvider>
       </body>
     </html>

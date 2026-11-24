@@ -1,6 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { z } from "zod";
+import { getSession } from "@/lib/auth";
+import { saveCart } from "@/lib/customers";
 import { getProductById } from "@/lib/woocommerce";
 import { addItemSchema } from "./schemas";
 import { CartError, MAX_LINE_QUANTITY, type Cart, type CartBackend, type CartItem, type CartVariation } from "./types";
@@ -44,7 +47,7 @@ async function read(): Promise<Stored> {
   }
 }
 
-async function write(lines: Stored): Promise<void> {
+async function write(lines: Stored, customerId?: number): Promise<void> {
   (await cookies()).set(COOKIE, Buffer.from(JSON.stringify(lines)).toString("base64url"), {
     httpOnly: true,
     sameSite: "lax",
@@ -52,6 +55,37 @@ async function write(lines: Stored): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
+  // Signed-in customers: keep their account copy in step, after the response is sent (the orders site is slow).
+  const id = customerId ?? (await getSession())?.customerId;
+  if (id) {
+    after(() => saveCart(id, lines).catch((e) => console.error("[cart] could not save the bag to the account:", e instanceof Error ? e.message : e)));
+  }
+}
+
+/**
+ * On sign-in: folds the bag saved on the account into the bag in this browser (quantities add up,
+ * capped), then stores the result in both places.
+ */
+export async function mergeSavedCart(customerId: number, saved: unknown): Promise<void> {
+  const parsed = storedSchema.safeParse(saved);
+  const local = await read();
+  if (!parsed.success || parsed.data.length === 0) {
+    if (local.length > 0) await write(local, customerId); // guest bag becomes the account bag
+    return;
+  }
+  const merged = [...parsed.data];
+  for (const l of local) {
+    const key = lineKey(l.id, l.variation);
+    const hit = merged.find((m) => lineKey(m.id, m.variation) === key);
+    if (hit) hit.qty = Math.min(MAX_LINE_QUANTITY, hit.qty + l.qty);
+    else if (merged.length < MAX_LINES) merged.push(l);
+  }
+  await write(merged, customerId);
+}
+
+/** Sign-out on a shared device: the bag must not stay in this browser. */
+export async function forgetLocalCart(): Promise<void> {
+  (await cookies()).delete(COOKIE);
 }
 
 async function build(lines: Stored): Promise<Cart> {

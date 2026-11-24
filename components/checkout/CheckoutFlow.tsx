@@ -89,11 +89,14 @@ export function CheckoutFlow({
   payments,
   deliveryOptions,
   freeDeliveryThreshold,
+  prefill,
 }: {
   pickupStores: PickupStore[];
   payments: boolean;
   deliveryOptions: DeliveryChoice[];
   freeDeliveryThreshold: number | null;
+  /** Saved details of the signed-in customer. Undefined for guests. */
+  prefill?: { name: string; phone: string; email: string; address: string; area: string } | null;
 }) {
   const router = useRouter();
   const { cart, status, clear } = useCart();
@@ -377,14 +380,14 @@ export function CheckoutFlow({
             <legend className="mb-4 p-0 font-display text-[30px]">1. Contact</legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field id="co-name" label="Full name" error={errors.name}>
-                <input id="co-name" name="name" type="text" autoComplete="name" placeholder="Ama Mensah" aria-invalid={!!errors.name} aria-describedby={errors.name ? "co-name-err" : undefined} className={inputCls} />
+                <input id="co-name" name="name" defaultValue={prefill?.name} type="text" autoComplete="name" placeholder="Ama Mensah" aria-invalid={!!errors.name} aria-describedby={errors.name ? "co-name-err" : undefined} className={inputCls} />
               </Field>
               <Field id="co-phone" label="Phone number" error={errors.phone}>
-                <input id="co-phone" name="phone" type="tel" autoComplete="tel" placeholder="024 000 0000" aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "co-phone-err" : undefined} className={inputCls} />
+                <input id="co-phone" name="phone" defaultValue={prefill?.phone} type="tel" autoComplete="tel" placeholder="024 000 0000" aria-invalid={!!errors.phone} aria-describedby={errors.phone ? "co-phone-err" : undefined} className={inputCls} />
               </Field>
             </div>
             <Field id="co-email" label="Email for your receipt" error={errors.email}>
-              <input id="co-email" name="email" type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={!!errors.email} aria-describedby={errors.email ? "co-email-err" : undefined} className={inputCls} />
+              <input id="co-email" name="email" defaultValue={prefill?.email} type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={!!errors.email} aria-describedby={errors.email ? "co-email-err" : undefined} className={inputCls} />
             </Field>
           </fieldset>
 
@@ -409,10 +412,10 @@ export function CheckoutFlow({
             {zoneId !== "store" ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id="co-addr" label="Address or GhanaPostGPS" error={errors.address}>
-                  <input id="co-addr" name="address" type="text" placeholder="e.g. GA-123-4567" aria-invalid={!!errors.address} aria-describedby={errors.address ? "co-addr-err" : undefined} className={inputCls} />
+                  <input id="co-addr" name="address" defaultValue={prefill?.address} type="text" placeholder="e.g. GA-123-4567" aria-invalid={!!errors.address} aria-describedby={errors.address ? "co-addr-err" : undefined} className={inputCls} />
                 </Field>
                 <Field id="co-area" label="Area / landmark">
-                  <input id="co-area" name="area" type="text" placeholder="e.g. Near Osu Castle" className={inputCls} />
+                  <input id="co-area" name="area" defaultValue={prefill?.area} type="text" placeholder="e.g. Near Osu Castle" className={inputCls} />
                 </Field>
               </div>
             ) : (

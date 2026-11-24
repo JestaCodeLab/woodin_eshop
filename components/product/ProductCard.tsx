@@ -47,7 +47,7 @@ export function ProductCard({
             {badge}
           </span>
         ) : null}
-        <WishlistButton title={title} />
+        <WishlistButton productId={product.id} title={title} />
         <QuickAdd productId={product.id} title={title} inStock={product.inStock} sizes={product.sizes} />
       </div>
 
