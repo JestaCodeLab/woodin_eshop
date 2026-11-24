@@ -49,7 +49,7 @@ export function ProfileForm({ initial }: { initial: { firstName: string; lastNam
           <input id="ad-email" type="email" value={v.email} disabled aria-describedby="ad-email-note" className={`${field.replace("bg-white", "bg-sand")} cursor-not-allowed text-muted`} />
           <span id="ad-email-note" className="text-[13px] font-light text-muted">This is how you sign in, so it cannot be changed here.</span>
         </div>
-        <div className="flex flex-col gap-1.5"><label htmlFor="ad-phone" className={label}>Phone (for MoMo &amp; delivery)</label><input id="ad-phone" type="tel" autoComplete="tel" placeholder="024 000 0000" value={v.phone} onChange={on("phone")} className={field} /></div>
+        <div className="flex flex-col gap-1.5"><label htmlFor="ad-phone" className={label}>Phone (for MoMo &amp; delivery)</label><input id="ad-phone" type="tel" autoComplete="tel" placeholder="024 000 0000" value={v.phone} onChange={on("phone")} aria-describedby="ad-phone-note" className={field} /><span id="ad-phone-note" className="text-[13px] font-light text-muted">If you change your number we will ask you to verify the new one.</span></div>
       </div>
       <div className="flex flex-col items-start gap-4">
         <Button type="submit" size="lg" disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>

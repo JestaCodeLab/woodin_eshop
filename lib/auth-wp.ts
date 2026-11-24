@@ -58,6 +58,25 @@ export async function verifyLoginCode(email: string, code: string): Promise<{ ok
   return { ok: false, reason: known.find((k) => k === r.data?.reason) ?? "unavailable" };
 }
 
+// --- Phone verification -----------------------------------------------------
+
+/** WordPress makes and stores the code (hashed) and hands it back so the shop can text it. */
+export async function requestPhoneCode(customerId: number, phone: string, ip: string): Promise<{ ok: true; code: string } | { ok: false; reason: "rate_limited" | "invalid_phone" | "unavailable" }> {
+  const r = await call("phone-code", { customer_id: customerId, phone, ip });
+  if (!r) return { ok: false, reason: "unavailable" };
+  if (r.status === 429) return { ok: false, reason: "rate_limited" };
+  if (r.data?.reason === "invalid_phone") return { ok: false, reason: "invalid_phone" };
+  return r.data?.ok && typeof r.data.code === "string" ? { ok: true, code: r.data.code } : { ok: false, reason: "unavailable" };
+}
+
+export async function verifyPhoneCode(customerId: number, phone: string, code: string): Promise<{ ok: true } | { ok: false; reason: VerifyFailure }> {
+  const r = await call("phone-verify", { customer_id: customerId, phone, code });
+  if (!r) return { ok: false, reason: "unavailable" };
+  if (r.data?.ok) return { ok: true };
+  const known: VerifyFailure[] = ["invalid", "expired", "locked", "wrong"];
+  return { ok: false, reason: known.find((k) => k === r.data?.reason) ?? "unavailable" };
+}
+
 // --- Sessions ---------------------------------------------------------------
 
 export async function createSession(input: { customerId: number; uaKey: string; uaLabel: string; ip: string }): Promise<{ sid: string; refresh: string } | null> {

@@ -5,7 +5,8 @@ import { CoverImage } from "@/components/ui/CoverImage";
 import { Button } from "@/components/ui/Button";
 import { requireSession } from "@/lib/account";
 import { toAccountOrder } from "@/lib/account-orders";
-import { getAddresses, getCustomer, getFavorites, listOrders } from "@/lib/customers";
+import { PhoneVerification } from "@/components/account/PhoneVerification";
+import { getAddresses, getCustomer, getFavorites, listOrders, phoneState } from "@/lib/customers";
 
 const h2 = "m-0 font-display text-[clamp(28px,3vw,36px)] font-normal";
 
@@ -21,9 +22,20 @@ export default async function AccountOverview() {
   const saved = favIds && favIds.length > 0 ? await savedCards(favIds, 3) : [];
   const preview = saved.length > 0 ? saved : await suggestionCards(3);
   const address = customer ? getAddresses(customer).find((a) => a.isDefault) : undefined;
+  const phone = customer ? phoneState(customer) : null;
 
   return (
     <>
+      {phone && !phone.verified ? (
+        phone.e164 ? (
+          <PhoneVerification phone={phone.display} verified={false} variant="banner" />
+        ) : (
+          <section aria-label="Add your phone" className="flex flex-wrap items-center justify-between gap-4 border border-line bg-sand px-5 py-5 sm:px-7">
+            <p className="m-0 max-w-[560px] text-[15px] font-light leading-relaxed text-body">Add a Ghana mobile number so we can send you order updates by text, and so delivery runs smoothly.</p>
+            <Link href="/account/details" className="label-caps flex h-12 shrink-0 items-center bg-brown px-6 tracking-[0.16em] text-ivory no-underline">Add my number</Link>
+          </section>
+        )
+      ) : null}
       {latest ? (
         <LatestOrder order={latest} />
       ) : orders !== null ? (

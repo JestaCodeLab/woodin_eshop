@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { cache } from "react";
 import { z } from "zod";
 import { wc, type WCOrder } from "./orders";
+import { toE164 } from "./sms";
 
 /**
  * WooCommerce customers over wc/v3. The eshop account IS a WooCommerce customer, so staff see
@@ -58,8 +59,7 @@ export async function createCustomer(email: string, p: { name: string; phone: st
       first_name: first,
       last_name: last,
       billing: { first_name: first, last_name: last, email, phone: p.phone, country: "GH" },
-      // The phone was typed, not confirmed: nothing is sent to it until it has been verified.
-      meta_data: [{ key: "woodin_phone_verified", value: "no" }],
+      // The phone was typed, not confirmed: it counts as unverified until the customer confirms it by SMS.
     });
     return created.id;
   } catch (e) {
@@ -113,6 +113,28 @@ export async function saveProfile(
     last_name: p.lastName,
     billing: { first_name: p.firstName, last_name: p.lastName, phone: p.phone, country: "GH", ...place },
     shipping: { first_name: p.firstName, last_name: p.lastName, country: "GH", ...place },
+  });
+}
+
+// --- Phone verification ----------------------------------------------------
+
+/**
+ * The phone on the account and whether the customer has proved it is theirs. Verification is tied to the
+ * NUMBER: change the phone and it is unverified again, because the verified number no longer matches.
+ */
+export function phoneState(c: WCCustomer): { display: string; e164: string | null; verified: boolean } {
+  const display = (c.billing?.phone ?? "").trim();
+  const e164 = toE164(display);
+  const verifiedFor = metaValue(c, "woodin_phone_verified_number");
+  return { display, e164, verified: e164 !== null && verifiedFor === e164 };
+}
+
+export async function setPhoneVerified(id: number, e164: string): Promise<void> {
+  await wc("PUT", `/customers/${id}`, {
+    meta_data: [
+      { key: "woodin_phone_verified_number", value: e164 },
+      { key: "woodin_phone_verified_at", value: new Date().toISOString() },
+    ],
   });
 }
 

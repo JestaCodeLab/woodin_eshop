@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Woodin customer login
- * Description: Sign-in codes by email and rotating login sessions for the Woodin eshop. The eshop calls these private endpoints (all need the shared secret): /woodin/v1/login-code, login-verify, session-create, session-refresh, session-check, session-list, session-revoke. Mail goes out through WordPress (wp_mail), so it uses whatever email setup the site already has.
- * Version: 2.0.0
+ * Description: Sign-in codes by email and rotating login sessions for the Woodin eshop. The eshop calls these private endpoints (all need the shared secret): /woodin/v1/login-code, login-verify, phone-code, phone-verify, session-create, session-refresh, session-check, session-list, session-revoke. Mail goes out through WordPress (wp_mail), so it uses whatever email setup the site already has.
+ * Version: 2.1.0
  *
  * INSTALL
  *   1. Upload this file to wp-content/mu-plugins/ (same folder as woodin-order-tracking.php). Nothing to activate.
@@ -20,6 +20,8 @@
  *   - Codes are only ever emailed to people who can use them: a sign-in code goes to existing customers only, never to
  *     an unknown address and never to staff accounts. A registration code goes to the address being registered.
  *   - Send limits: once per 45 s per email, 8 per 10 min per visitor IP, 150 per hour for the whole site.
+ *   - Phone verification texts (they cost SMS credit): 1 per minute per number, 5 per hour per account, 3 per hour per
+ *     number, 10 per hour per IP, 100 per hour site-wide. Same code rules as email codes (hashed, 10 min, 5 tries).
  *   - Login sessions: the browser holds a short-lived access cookie (15 min) plus a refresh token. Only a hash of the
  *     refresh token is stored here. Every refresh issues a new token. Presenting an old token again (a sign it was copied)
  *     signs that device out. A refresh from a different browser/OS than the one that signed in is refused. A new-device
@@ -36,6 +38,12 @@ const WOODIN_LOGIN_MAX_TRIES = 5;      // wrong guesses before the code is burne
 const WOODIN_LOGIN_COOLDOWN = 45;      // seconds between codes for one email
 const WOODIN_LOGIN_IP_MAX = 8;         // codes per visitor IP per 10 minutes
 const WOODIN_LOGIN_GLOBAL_MAX = 150;   // codes for the whole site per hour
+
+const WOODIN_PHONE_COOLDOWN = 60;      // seconds between texts to one number
+const WOODIN_PHONE_CUSTOMER_MAX = 5;   // verification texts per account per hour
+const WOODIN_PHONE_NUMBER_MAX = 3;     // verification texts to one number per hour, whichever accounts ask
+const WOODIN_PHONE_IP_MAX = 10;        // verification texts per visitor IP per hour
+const WOODIN_PHONE_GLOBAL_MAX = 100;   // verification texts for the whole site per hour (each one costs SMS credit)
 
 const WOODIN_SESSION_MAX = 10;         // devices signed in at once, per customer
 const WOODIN_REFRESH_IDLE = 2592000;   // 30 days: a refresh token unused this long dies
@@ -269,6 +277,87 @@ add_action('rest_api_init', function () {
                 $remaining = max(1, WOODIN_LOGIN_TTL - (time() - (int) $row['sent']));
                 set_transient($key, $row, $remaining);
 
+                if (!wp_check_password($code, $row['hash'])) {
+                    return new WP_REST_Response(['ok' => false, 'reason' => 'wrong'], 200);
+                }
+                delete_transient($key); // single use
+                return new WP_REST_Response(['ok' => true], 200);
+            } finally {
+                woodin_login_unlock($key);
+            }
+        },
+    ]);
+
+    // -------------------------------------------------------------------------------------------------------
+    // Phone verification. WordPress makes, stores (hashed) and checks the code; the eshop sends the text
+    // (FlockText) and tells us which number to verify. The number always comes from the customer's own
+    // account record on the eshop side, never from the browser.
+    // -------------------------------------------------------------------------------------------------------
+    register_rest_route('woodin/v1', '/phone-code', [
+        'methods'             => 'POST',
+        'permission_callback' => $auth,
+        'callback'            => function (WP_REST_Request $req) {
+            $cid = (int) $req->get_param('customer_id');
+            $phone = preg_replace('/[^\d+]/', '', (string) $req->get_param('phone'));
+            if (!woodin_customer_by_id($cid)) {
+                return new WP_REST_Response(['ok' => false, 'reason' => 'not_customer'], 403);
+            }
+            if (!preg_match('/^\+233\d{9}$/', $phone)) {
+                return new WP_REST_Response(['ok' => false, 'reason' => 'invalid_phone'], 400);
+            }
+            $ip = filter_var((string) $req->get_param('ip'), FILTER_VALIDATE_IP) ?: 'unknown';
+            $key = 'woodin_phone_' . md5($cid . '|' . $phone);
+
+            if (!woodin_login_lock('phone_throttle')) {
+                return new WP_REST_Response(['ok' => false, 'reason' => 'busy'], 503);
+            }
+            try {
+                $existing = get_transient($key);
+                if (is_array($existing) && time() - (int) $existing['sent'] < WOODIN_PHONE_COOLDOWN) {
+                    return new WP_REST_Response(['ok' => false, 'reason' => 'too_soon'], 429);
+                }
+                if (!woodin_login_allow('woodin_phonecust_' . $cid, WOODIN_PHONE_CUSTOMER_MAX, 3600)
+                    || !woodin_login_allow('woodin_phonenum_' . md5($phone), WOODIN_PHONE_NUMBER_MAX, 3600)
+                    || !woodin_login_allow('woodin_phoneip_' . md5($ip), WOODIN_PHONE_IP_MAX, 3600)
+                    || !woodin_login_allow('woodin_phone_global', WOODIN_PHONE_GLOBAL_MAX, 3600)) {
+                    return new WP_REST_Response(['ok' => false, 'reason' => 'too_soon'], 429);
+                }
+                $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                set_transient($key, ['hash' => wp_hash_password($code), 'tries' => 0, 'sent' => time()], WOODIN_LOGIN_TTL);
+            } finally {
+                woodin_login_unlock('phone_throttle');
+            }
+            // The eshop texts this to the number. It is returned over the authenticated server-to-server call only.
+            return new WP_REST_Response(['ok' => true, 'code' => $code], 200);
+        },
+    ]);
+
+    register_rest_route('woodin/v1', '/phone-verify', [
+        'methods'             => 'POST',
+        'permission_callback' => $auth,
+        'callback'            => function (WP_REST_Request $req) {
+            $cid = (int) $req->get_param('customer_id');
+            $phone = preg_replace('/[^\d+]/', '', (string) $req->get_param('phone'));
+            $code = preg_replace('/\D/', '', (string) $req->get_param('code'));
+            if (!woodin_customer_by_id($cid) || !preg_match('/^\+233\d{9}$/', $phone) || strlen($code) !== 6) {
+                return new WP_REST_Response(['ok' => false, 'reason' => 'invalid'], 400);
+            }
+            $key = 'woodin_phone_' . md5($cid . '|' . $phone);
+
+            if (!woodin_login_lock($key)) {
+                return new WP_REST_Response(['ok' => false, 'reason' => 'busy'], 503);
+            }
+            try {
+                $row = get_transient($key);
+                if (!is_array($row)) {
+                    return new WP_REST_Response(['ok' => false, 'reason' => 'expired'], 200);
+                }
+                if ((int) $row['tries'] >= WOODIN_LOGIN_MAX_TRIES) {
+                    delete_transient($key);
+                    return new WP_REST_Response(['ok' => false, 'reason' => 'locked'], 200);
+                }
+                $row['tries'] = (int) $row['tries'] + 1; // counted BEFORE the check
+                set_transient($key, $row, max(1, WOODIN_LOGIN_TTL - (time() - (int) $row['sent'])));
                 if (!wp_check_password($code, $row['hash'])) {
                     return new WP_REST_Response(['ok' => false, 'reason' => 'wrong'], 200);
                 }
