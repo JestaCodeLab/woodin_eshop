@@ -92,7 +92,15 @@ export async function startSession(customerId: number, email: string): Promise<v
 }
 
 export async function endSession(): Promise<void> {
-  (await cookies()).delete(COOKIE);
+  // Expire it with the SAME attributes it was set with. A "__Host-" cookie is only accepted (and only
+  // deleted) by browsers when the response carries Secure and Path=/, which a plain delete() omits.
+  (await cookies()).set(COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
 }
 
 // ---------------------------------------------------------------------------
