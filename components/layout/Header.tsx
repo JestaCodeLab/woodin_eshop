@@ -22,7 +22,6 @@ const iconBtn = "flex h-11 w-11 items-center justify-center";
 
 export function Header({ variant = "solid" }: HeaderProps) {
   const overlay = variant === "overlay";
-  const logo = overlay ? LOGO.white : LOGO.brown;
   const accounts = accountsEnabled();
   const announcement = `Free Accra delivery over ${freeDeliveryLabel()} · Pay with Mobile Money`;
 
@@ -51,23 +50,14 @@ export function Header({ variant = "solid" }: HeaderProps) {
           </div>
 
           <Link href="/" aria-label="Woodin, Le créateur: shop home" className="block leading-none">
-            {/* Phones: the W mark alone (brown, or white over the hero). md and up: the full logo. */}
+            {/* The W mark alone at every size (brown, or white over the home page hero). */}
             <Image
               src={LOGO.mark.src}
               width={LOGO.mark.width}
               height={LOGO.mark.height}
               alt="Woodin Le créateur"
               priority
-              className={`h-9 w-auto md:hidden ${overlay ? "brightness-0 invert" : ""}`}
-            />
-            <Image
-              src={logo.src}
-              width={logo.width}
-              height={logo.height}
-              alt=""
-              aria-hidden="true"
-              priority
-              className="hidden h-[52px] w-auto md:block"
+              className={`h-9 w-auto md:h-12 ${overlay ? "brightness-0 invert" : ""}`}
             />
           </Link>
 
