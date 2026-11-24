@@ -8,17 +8,17 @@ const isDev = process.env.NODE_ENV === "development";
 /**
  * Content-Security-Policy without nonces, so pages stay statically cacheable (a nonce would force
  * every page to render per request). 'unsafe-inline' is needed for Next's inline bootstrap scripts.
- * Third parties: Cloudflare Turnstile (sign-in check), Paystack (checkout popup + API), Google Maps (store locator embed), YouTube (embeds
+ * Third parties: SiteRadar analytics, Cloudflare Turnstile (sign-in check), Paystack (checkout popup + API), Google Maps (store locator embed), YouTube (embeds
  * inside Insights posts), and the WordPress host for images.
  */
 const wpOrigin = storeUrl?.origin ?? "";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://js.paystack.co https://*.paystack.co https://*.paystack.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://js.paystack.co https://*.paystack.co https://*.paystack.com https://challenges.cloudflare.com https://www.siterada.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' blob: data: ${wpOrigin} https://*.paystack.co https://*.paystack.com https://*.google.com https://*.gstatic.com https://*.googleapis.com https://i.ytimg.com`.trim(),
+  `img-src 'self' blob: data: ${wpOrigin} https://*.paystack.co https://*.paystack.com https://*.google.com https://*.gstatic.com https://*.googleapis.com https://i.ytimg.com https://www.siterada.com`.trim(),
   "font-src 'self' data:",
-  "connect-src 'self' https://*.paystack.co https://*.paystack.com https://challenges.cloudflare.com" + (isDev ? " ws: wss:" : ""),
+  "connect-src 'self' https://*.paystack.co https://*.paystack.com https://challenges.cloudflare.com https://www.siterada.com" + (isDev ? " ws: wss:" : ""),
   "frame-src https://*.paystack.co https://*.paystack.com https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.youtube.com https://www.youtube-nocookie.com",
   "object-src 'none'",
   "base-uri 'self'",

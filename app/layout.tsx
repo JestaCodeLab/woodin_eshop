@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Serif_Display, Jost } from "next/font/google";
+import Script from "next/script";
 import { FavoritesProvider } from "@/components/account/FavoritesProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Footer } from "@/components/layout/Footer";
@@ -77,6 +78,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             ],
           }}
         />
+        {/* SiteRadar analytics. Loaded after the page is interactive so it never delays rendering. */}
+        <Script src="https://www.siterada.com/t.js" data-site="woodin-fashion-online-shop" strategy="afterInteractive" />
         <PageLoader />
         <CartProvider>
           <FavoritesProvider>
