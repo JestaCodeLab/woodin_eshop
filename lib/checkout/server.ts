@@ -53,6 +53,11 @@ export async function buildQuote(zone: string): Promise<Quote> {
   if (cart.currency !== "GHS") throw new CheckoutError(500, "currency", "Unsupported currency.");
   if (cart.items.some((i) => !i.inStock)) throw new CheckoutError(409, "out_of_stock", "An item in your bag is out of stock.");
   if (cart.items.some((i) => i.unitPrice === null)) throw new CheckoutError(409, "no_price", "An item in your bag has no price yet.");
+  // A zero or negative price means the catalogue is wrong (or has been tampered with): never charge it.
+  if (cart.items.some((i) => (i.unitPrice ?? 0) <= 0 || (i.lineTotal ?? 0) <= 0)) {
+    console.error("[checkout] refused: an item has a zero or negative price", cart.items.filter((i) => (i.unitPrice ?? 0) <= 0).map((i) => i.productId));
+    throw new CheckoutError(409, "bad_price", "An item in your bag cannot be ordered right now. Please try again later.");
+  }
 
   const option = (await getDeliveryOptions()).find((o) => o.id === zone);
   if (!option || option.fee === null) throw new CheckoutError(409, "no_delivery_fee", "That delivery option is not available yet.");
