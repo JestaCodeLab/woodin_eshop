@@ -11,6 +11,11 @@
  *     background colour, body background, body text colour, footer text. They still show in the settings
  *     screen, but changing them there has no effect while this file is installed. Delete the file to go back.
  *   - Adds CSS: serif headings, spacing, link and button colours, softer borders.
+ *   - Stops WooCommerce's "new account" email for accounts the eshop creates (customers there sign in with an
+ *     emailed code, so "set your password" and a link to this site's My account page are wrong for them).
+ *     Accounts created by hand in WordPress still get the normal email.
+ *   - Makes the order number in customer emails link to the eshop's order tracking page (/track?order=N) for eshop
+ *     orders, instead of this site's My account > View order page.
  *   - Does NOT touch the wording. Edit each email's subject, heading and "additional content" in
  *     WooCommerce > Settings > Emails > (the email) as usual.
  *
@@ -82,3 +87,19 @@ add_filter('woocommerce_email_styles', function ($css) {
         #credit a { color: #5F554C; }
     ";
 });
+
+/**
+ * 3. No "new account" email for customers created by the eshop. The eshop creates the WooCommerce customer
+ *    through the REST API the first time someone signs in with a code; they have no password to set.
+ */
+add_filter('woocommerce_email_enabled_customer_new_account', function ($enabled) {
+    return (defined('REST_REQUEST') && REST_REQUEST) ? false : $enabled;
+});
+
+/** 4. Eshop orders: "view order" links go to the eshop's tracking page, not this site's My account. */
+add_filter('woocommerce_get_view_order_url', function ($url, $order) {
+    if ($order && $order->get_meta('woodin_eshop') === '1') {
+        return add_query_arg('order', $order->get_id(), woodin_wc_emails_shop_url() . '/track');
+    }
+    return $url;
+}, 10, 2);
