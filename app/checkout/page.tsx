@@ -19,6 +19,7 @@ async function CheckoutContent() {
       deliveryOptions={deliveryOptions.map(({ id, name, short, eta, fee, freeEligible }) => ({ id, name, short, eta, fee, freeEligible }))}
       freeDeliveryThreshold={freeDeliveryThreshold()}
       prefill={prefill}
+      savedAddresses={prefill?.addresses.map(({ id, label, name, phone, address, area }) => ({ id, label, name, phone, address, area })) ?? []}
     />
   );
 }

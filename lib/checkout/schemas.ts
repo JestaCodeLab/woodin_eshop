@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { REFERENCE_PATTERN } from "./reference";
 
-const ghPhone = z
+export const ghPhone = z
   .string()
   .trim()
   .transform((s) => s.replace(/[\s-]/g, ""))
@@ -19,6 +19,18 @@ export const startCheckoutSchema = z
       address: z.string().trim().max(240).optional(),
       area: z.string().trim().max(160).optional(),
       storeId: z.string().trim().max(60).optional(),
+      /**
+       * Where to deliver when it differs from the billing address (address/area above). Absent means
+       * "ship to my billing address". Ignored for store pickup.
+       */
+      shipTo: z
+        .object({
+          name: z.string().trim().min(2).max(120),
+          phone: ghPhone,
+          address: z.string().trim().min(3).max(240),
+          area: z.string().trim().max(160).optional(),
+        })
+        .optional(),
     }),
   })
   .refine((v) => v.delivery.zone === "store" || (v.delivery.address ?? "").length >= 3, {

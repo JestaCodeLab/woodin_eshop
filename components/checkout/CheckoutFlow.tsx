@@ -21,7 +21,17 @@ import { METHODS, type MethodId, type ZoneId } from "@/lib/checkout-config";
  */
 
 type Step = "form" | "paying" | "done";
-type Errors = Partial<Record<"name" | "phone" | "email" | "address" | "store", string>>;
+type Errors = Partial<Record<"name" | "phone" | "email" | "address" | "store" | "shipName" | "shipPhone" | "shipAddress", string>>;
+
+export interface SavedAddress {
+  id: string;
+  label: string;
+  name: string;
+  phone: string;
+  address: string;
+  area: string;
+}
+const GH_PHONE = /^(\+?233|0)\d{9}$/;
 
 const inputCls = "h-[54px] border border-line-strong bg-white px-4 text-[15px] aria-[invalid=true]:border-lowstock";
 const labelCls = "label-caps tracking-[0.14em]";
@@ -90,6 +100,7 @@ export function CheckoutFlow({
   deliveryOptions,
   freeDeliveryThreshold,
   prefill,
+  savedAddresses = [],
 }: {
   pickupStores: PickupStore[];
   payments: boolean;
@@ -97,6 +108,8 @@ export function CheckoutFlow({
   freeDeliveryThreshold: number | null;
   /** Saved details of the signed-in customer. Undefined for guests. */
   prefill?: { name: string; phone: string; email: string; address: string; area: string } | null;
+  /** The signed-in customer's address book, offered when shipping to a different address. */
+  savedAddresses?: SavedAddress[];
 }) {
   const router = useRouter();
   const { cart, status, clear } = useCart();
@@ -109,6 +122,10 @@ export function CheckoutFlow({
     METHODS.some((m) => m.id === search.get("pay")) ? (search.get("pay") as MethodId) : "mtn",
   );
   const [errors, setErrors] = useState<Errors>({});
+  // Shipping address: by default the billing address is used. Unticking shows a separate recipient + address.
+  const [sameAsBilling, setSameAsBilling] = useState(true);
+  const [ship, setShip] = useState({ name: "", phone: "", address: "", area: "" });
+  const setShipField = (k: keyof typeof ship) => (e: React.ChangeEvent<HTMLInputElement>) => setShip((s) => ({ ...s, [k]: e.target.value }));
   const [phone, setPhone] = useState("");
   const [receipt, setReceipt] = useState<{ total: string; zone: string; method: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -138,6 +155,11 @@ export function CheckoutFlow({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(get("email"))) e.email = "Enter an email address for your receipt.";
     if (zoneId !== "store" && get("address").length < 3) e.address = "Enter your address or GhanaPostGPS code.";
     if (zoneId === "store" && !get("store")) e.store = "Choose a store to collect from.";
+    if (zoneId !== "store" && !sameAsBilling) {
+      if (ship.name.trim().length < 2) e.shipName = "Enter the recipient's full name.";
+      if (!GH_PHONE.test(ship.phone.replace(/[\s-]/g, ""))) e.shipPhone = "Enter a Ghana mobile number for the courier.";
+      if (ship.address.trim().length < 3) e.shipAddress = "Enter the delivery address or GhanaPostGPS code.";
+    }
     return e;
   }
 
@@ -172,7 +194,13 @@ export function CheckoutFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contact: { name: get("name"), phone: get("phone"), email: get("email") },
-          delivery: { zone: zoneId, address: get("address") || undefined, area: get("area") || undefined, storeId: get("store") || undefined },
+          delivery: {
+            zone: zoneId,
+            address: get("address") || undefined,
+            area: get("area") || undefined,
+            storeId: get("store") || undefined,
+            shipTo: zoneId !== "store" && !sameAsBilling ? { name: ship.name.trim(), phone: ship.phone.trim(), address: ship.address.trim(), area: ship.area.trim() || undefined } : undefined,
+          },
         }),
       });
       const body = await res.json().catch(() => null);
@@ -391,8 +419,22 @@ export function CheckoutFlow({
             </Field>
           </fieldset>
 
+          {zoneId !== "store" ? (
+            <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+              <legend className="mb-4 p-0 font-display text-[30px]">2. Billing address</legend>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="co-addr" label="Address or GhanaPostGPS" error={errors.address}>
+                  <input id="co-addr" name="address" defaultValue={prefill?.address} type="text" autoComplete="street-address" placeholder="e.g. GA-123-4567" aria-invalid={!!errors.address} aria-describedby={errors.address ? "co-addr-err" : undefined} className={inputCls} />
+                </Field>
+                <Field id="co-area" label="Area / landmark">
+                  <input id="co-area" name="area" defaultValue={prefill?.area} type="text" placeholder="e.g. Near Osu Castle" className={inputCls} />
+                </Field>
+              </div>
+            </fieldset>
+          ) : null}
+
           <fieldset className="m-0 flex min-w-0 flex-col gap-3.5 border-0 p-0">
-            <legend className="mb-4 p-0 font-display text-[30px]">2. Delivery</legend>
+            <legend className="mb-4 p-0 font-display text-[30px]">{zoneId !== "store" ? "3" : "2"}. Delivery</legend>
             <div role="radiogroup" aria-label="Delivery option" className="grid gap-2.5 sm:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
               {deliveryOptions.map((z) => (
                 <button
@@ -410,14 +452,49 @@ export function CheckoutFlow({
               ))}
             </div>
             {zoneId !== "store" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="co-addr" label="Address or GhanaPostGPS" error={errors.address}>
-                  <input id="co-addr" name="address" defaultValue={prefill?.address} type="text" placeholder="e.g. GA-123-4567" aria-invalid={!!errors.address} aria-describedby={errors.address ? "co-addr-err" : undefined} className={inputCls} />
-                </Field>
-                <Field id="co-area" label="Area / landmark">
-                  <input id="co-area" name="area" defaultValue={prefill?.area} type="text" placeholder="e.g. Near Osu Castle" className={inputCls} />
-                </Field>
-              </div>
+              <>
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
+                  <input type="checkbox" checked={sameAsBilling} onChange={(e) => setSameAsBilling(e.target.checked)} className="h-[18px] w-[18px] accent-brown" />
+                  Ship to my billing address
+                </label>
+                {!sameAsBilling ? (
+                  <div className="flex flex-col gap-4 border border-line bg-white p-5" role="group" aria-label="Shipping address">
+                    <span className="label-caps tracking-[0.14em]">Shipping address</span>
+                    {savedAddresses.length > 0 ? (
+                      <Field id="co-saved" label="Use a saved address">
+                        <select
+                          id="co-saved"
+                          defaultValue=""
+                          onChange={(e) => {
+                            const a = savedAddresses.find((x) => x.id === e.target.value);
+                            if (a) setShip({ name: a.name, phone: a.phone, address: a.address, area: a.area });
+                          }}
+                          className={`${inputCls} px-3.5`}
+                        >
+                          <option value="">Choose a saved address…</option>
+                          {savedAddresses.map((a) => (
+                            <option key={a.id} value={a.id}>{a.label}: {a.address}</option>
+                          ))}
+                        </select>
+                      </Field>
+                    ) : null}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field id="co-ship-name" label="Recipient's full name" error={errors.shipName}>
+                        <input id="co-ship-name" value={ship.name} onChange={setShipField("name")} type="text" autoComplete="shipping name" aria-invalid={!!errors.shipName} aria-describedby={errors.shipName ? "co-ship-name-err" : undefined} className={inputCls} />
+                      </Field>
+                      <Field id="co-ship-phone" label="Recipient's phone (for the courier)" error={errors.shipPhone}>
+                        <input id="co-ship-phone" value={ship.phone} onChange={setShipField("phone")} type="tel" autoComplete="shipping tel" placeholder="024 000 0000" aria-invalid={!!errors.shipPhone} aria-describedby={errors.shipPhone ? "co-ship-phone-err" : undefined} className={inputCls} />
+                      </Field>
+                      <Field id="co-ship-addr" label="Address or GhanaPostGPS" error={errors.shipAddress}>
+                        <input id="co-ship-addr" value={ship.address} onChange={setShipField("address")} type="text" autoComplete="shipping street-address" placeholder="e.g. GA-123-4567" aria-invalid={!!errors.shipAddress} aria-describedby={errors.shipAddress ? "co-ship-addr-err" : undefined} className={inputCls} />
+                      </Field>
+                      <Field id="co-ship-area" label="Area / landmark">
+                        <input id="co-ship-area" value={ship.area} onChange={setShipField("area")} type="text" placeholder="e.g. Near Osu Castle" className={inputCls} />
+                      </Field>
+                    </div>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <Field id="co-store" label="Collect from" error={errors.store}>
                 <select id="co-store" name="store" defaultValue={pickupStores[0]?.id} className={`${inputCls} px-3.5`}>
@@ -430,7 +507,7 @@ export function CheckoutFlow({
           </fieldset>
 
           <fieldset className="m-0 flex min-w-0 flex-col gap-3.5 border-0 p-0">
-            <legend className="mb-4 p-0 font-display text-[30px]">3. Payment</legend>
+            <legend className="mb-4 p-0 font-display text-[30px]">{zoneId !== "store" ? "4" : "3"}. Payment</legend>
             {payments ? (
               <p className="m-0 border border-line bg-white p-4 text-sm font-light leading-[1.6] text-body">
                 You will choose <strong className="font-medium">MTN MoMo, Telecel Cash, AT Money or card</strong> in the secure

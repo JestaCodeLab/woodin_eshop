@@ -99,9 +99,17 @@ export async function startCheckout(input: StartCheckoutInput): Promise<StartRes
   if (input.delivery.zone === "store" && !store) throw new CheckoutError(400, "bad_store", "Choose a store to collect from.");
 
   const [first, ...rest] = input.contact.name.split(" ");
-  const phone = input.contact.phone.replace(/^0/, "+233").replace(/^233/, "+233");
+  const normPhone = (p: string) => p.replace(/^0/, "+233").replace(/^233/, "+233");
+  const phone = normPhone(input.contact.phone);
   const address = store ? { address_1: `Collect from: ${store.name}`, address_2: store.address } : { address_1: input.delivery.address ?? "", address_2: input.delivery.area ?? "" };
   const person = { first_name: first, last_name: rest.join(" "), country: "GH", ...address };
+  // Billing is always the customer. Shipping is the same unless they gave a different recipient/address
+  // (never for store pickup, which has no delivery address).
+  const shipTo = store ? undefined : input.delivery.shipTo;
+  const [shipFirst = "", ...shipRest] = (shipTo?.name ?? "").split(" ");
+  const shipping = shipTo
+    ? { first_name: shipFirst, last_name: shipRest.join(" "), country: "GH", address_1: shipTo.address, address_2: shipTo.area ?? "", phone: normPhone(shipTo.phone) }
+    : person;
   const nonce = randomBytes(12).toString("hex"); // 96 bits: the reference is the only secret guarding the confirm endpoint
 
   // Signed-in customers: the order belongs to their account (order history). The customer id comes
@@ -116,8 +124,8 @@ export async function startCheckout(input: StartCheckoutInput): Promise<StartRes
     payment_method_title: "Paystack (Mobile Money / Card)",
     set_paid: false,
     billing: { ...person, email: input.contact.email, phone },
-    shipping: person,
-    customer_note: input.delivery.area ? `Landmark: ${input.delivery.area}` : undefined,
+    shipping,
+    customer_note: (shipTo ? shipTo.area : input.delivery.area) ? `Landmark: ${shipTo ? shipTo.area : input.delivery.area}` : undefined,
     line_items: quote.cart.items.map((i) => ({
       product_id: i.productId,
       quantity: i.quantity,
