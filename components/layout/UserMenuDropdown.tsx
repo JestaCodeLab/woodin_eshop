@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/account/favorites", label: "Favourites" },
   { href: "/account/addresses", label: "Addresses" },
   { href: "/account/details", label: "Account details" },
+  { href: "/account/security", label: "Security" },
 ];
 
 /** Signed-in menu in the navbar, after the bag. Closes on outside click, Esc, or when the page changes. */

@@ -37,6 +37,7 @@ async function AccountShell({ children }: { children: ReactNode }) {
     { href: "/account/favorites", label: "Favourites", icon: "favorites", meta: favorites?.length ? String(favorites.length) : "" },
     { href: "/account/addresses", label: "Addresses", icon: "addresses" },
     { href: "/account/details", label: "Account details", icon: "details" },
+    { href: "/account/security", label: "Security", icon: "security" },
   ];
 
   return (

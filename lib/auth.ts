@@ -1,148 +1,88 @@
 import "server-only";
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { ordersBase } from "./orders";
+import { cache } from "react";
+import { ACCESS_COOKIE, ACCESS_TTL, REFRESH_COOKIE, REFRESH_MAX_AGE, cookieBase, describeDevice, maskIp, sessionKey, signAccess, verifyAccess } from "./auth-tokens";
+import { checkSession, createSession, loginSecretConfigured, revokeSessions } from "./auth-wp";
 import { ordersConfigured } from "./payments-config";
+import { clientIp } from "./rate-limit";
+import { turnstileConfigured } from "./turnstile";
 
 /**
- * Customer sessions: passwordless sign-in with a 6-digit code sent by email.
+ * Customer sessions (see lib/auth-tokens.ts for the model).
  *
- * - The code is generated, hashed, rate-limited and emailed by the WordPress mu-plugin
- *   (wordpress/woodin-customer-login.php), so no extra service is needed and guess limits hold
- *   across serverless instances.
- * - After the code checks out, the eshop sets a signed httpOnly cookie holding only the WooCommerce
- *   customer id + email + expiry. Nothing else about the customer is trusted from the browser.
+ * - Sign-in = a 6-digit emailed code (generated, hashed and rate-limited by the WordPress plugin) plus a Turnstile
+ *   check. Registering and signing in are separate: a code is only emailed to a registering address or to an
+ *   existing customer.
+ * - After the code, the browser gets a 15-minute ACCESS cookie and a rotating REFRESH cookie. The proxy
+ *   (proxy.ts) renews the access cookie before pages render; WordPress keeps a hash of the refresh token and can
+ *   revoke it, so "sign out" and "sign out everywhere" really end sessions.
  */
-
-// "__Host-" makes browsers accept the cookie only over HTTPS, for this exact host, with Path=/ and no
-// Domain, so a sibling subdomain (e.g. the WordPress site) cannot overwrite or fixate it. It needs
-// Secure, so it is production-only (plain http://localhost cannot set Secure cookies).
-const COOKIE = process.env.NODE_ENV === "production" ? "__Host-woodin_session" : "woodin_session";
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 export interface Session {
   /** WooCommerce customer id. */
   customerId: number;
   email: string;
-  exp: number;
+  /** This device's session id. */
+  sid: string;
 }
 
-function secret(): string | null {
-  const s = process.env.SESSION_SECRET?.trim();
-  return s && s.length >= 32 ? s : null;
-}
-
-function loginSecret(): string | null {
-  const s = process.env.WC_LOGIN_SECRET?.trim();
-  return s && s.length >= 20 ? s : null;
-}
-
-/** Accounts are available only when the session secret, the login secret and the orders site are all set. */
+/** Accounts need the session secret, the WordPress login plugin + orders site and, in production, Turnstile. */
 export function accountsEnabled(): boolean {
-  return secret() !== null && loginSecret() !== null && ordersConfigured();
+  return sessionKey() !== null && loginSecretConfigured() && ordersConfigured() && (turnstileConfigured() || process.env.NODE_ENV !== "production");
 }
 
-const sign = (payload: string, key: string) => createHmac("sha256", key).update(payload).digest("base64url");
+// One live check per request, however many components ask who is signed in.
+const liveCheck = cache((customerId: number, sid: string) => checkSession(customerId, sid));
 
-function encode(session: Session, key: string): string {
-  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
-  return `${payload}.${sign(payload, key)}`;
-}
-
-function decode(value: string, key: string): Session | null {
-  const [payload, sig, extra] = value.split(".");
-  if (!payload || !sig || extra !== undefined) return null;
-  const expected = Buffer.from(sign(payload, key));
-  const given = Buffer.from(sig);
-  if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
-  try {
-    const s = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Partial<Session>;
-    if (!Number.isInteger(s.customerId) || (s.customerId as number) <= 0) return null;
-    if (typeof s.email !== "string" || typeof s.exp !== "number" || s.exp * 1000 < Date.now()) return null;
-    return s as Session;
-  } catch {
-    return null;
-  }
-}
-
-/** The signed-in customer, or null. Reads cookies, so call it behind <Suspense> or in a route handler. */
+/**
+ * The signed-in customer, or null. Reads cookies, so call it behind <Suspense> or in a route handler.
+ *
+ * Two things must both hold: the signed access cookie is genuine and unexpired, AND WordPress says that device's
+ * session is still alive. The second check is what makes sign-out immediate: a copied cookie, or a device signed
+ * out from another device, stops working on its next request. If WordPress cannot be reached the answer is "not
+ * signed in" (fail closed).
+ */
 export async function getSession(): Promise<Session | null> {
-  const key = secret();
-  if (!key) return null;
-  const raw = (await cookies()).get(COOKIE)?.value;
+  const raw = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!raw) return null;
-  // Checking the expiry compares against the current time. Next refuses unstable values while it
-  // prerenders or prefetches a page, so wait until a real request is being served.
+  // Checking expiry compares against the current time. Next refuses unstable values while it prerenders or
+  // prefetches a page, so wait until a real request is being served.
   await connection();
-  return decode(raw, key);
+  const c = verifyAccess(raw);
+  if (!c) return null;
+  if ((await liveCheck(c.customerId, c.sid)) !== "active") return null;
+  return { customerId: c.customerId, email: c.email, sid: c.sid };
 }
 
-export async function startSession(customerId: number, email: string): Promise<void> {
-  const key = secret();
-  if (!key) throw new Error("SESSION_SECRET is not set");
-  const exp = Math.floor(Date.now() / 1000) + MAX_AGE;
-  (await cookies()).set(COOKIE, encode({ customerId, email, exp }, key), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: MAX_AGE,
-  });
+/** Creates the session in WordPress and sets both cookies. Returns false when WordPress could not. */
+export async function startSession(req: Request, customerId: number, email: string): Promise<boolean> {
+  const device = describeDevice(req.headers.get("user-agent"));
+  const created = await createSession({ customerId, uaKey: device.key, uaLabel: device.label, ip: maskIp(clientIp(req)) });
+  if (!created) return false;
+  const jar = await cookies();
+  jar.set(ACCESS_COOKIE, signAccess({ customerId, email, sid: created.sid }), cookieBase(ACCESS_TTL));
+  jar.set(REFRESH_COOKIE, created.refresh, cookieBase(REFRESH_MAX_AGE));
+  return true;
 }
 
+/** Ends this device's session in WordPress (best effort) and clears both cookies. */
 export async function endSession(): Promise<void> {
-  // Expire it with the SAME attributes it was set with. A "__Host-" cookie is only accepted (and only
-  // deleted) by browsers when the response carries Secure and Path=/, which a plain delete() omits.
-  (await cookies()).set(COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
-  });
+  const jar = await cookies();
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  const claims = access ? verifyAccess(access) : null;
+  // Revoke on the server FIRST, using whichever cookie we have, so a copy of either one is dead from this moment.
+  if (refresh) await revokeSessions({ refresh }).catch(() => false);
+  else if (claims) await revokeSessions({ customerId: claims.customerId, sid: claims.sid }).catch(() => false);
+  clearSessionCookies(jar);
 }
 
-// ---------------------------------------------------------------------------
-// Login codes (sent and checked by WordPress)
-// ---------------------------------------------------------------------------
-
-export type CodeFailure = "invalid_email" | "too_soon" | "mail_failed" | "unavailable";
-export type VerifyFailure = "invalid" | "expired" | "locked" | "wrong" | "unavailable";
-
-async function loginCall(path: "login-code" | "login-verify", body: Record<string, string>): Promise<{ status: number; reason?: string; ok: boolean }> {
-  const key = loginSecret();
-  if (!key) return { status: 503, ok: false, reason: "unavailable" };
-  try {
-    const res = await fetch(`${ordersBase()}/?rest_route=/woodin/v1/${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Woodin-Secret": key },
-      body: JSON.stringify(body),
-      cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
-    });
-    const data = (await res.json().catch(() => null)) as { ok?: boolean; reason?: string } | null;
-    if (!data || (typeof data.ok !== "boolean")) {
-      console.error(`[auth] ${path} answered ${res.status} without a result (is woodin-customer-login.php installed?)`);
-      return { status: 502, ok: false, reason: "unavailable" };
-    }
-    return { status: res.status, ok: data.ok, reason: data.reason };
-  } catch (e) {
-    console.error(`[auth] ${path} failed:`, e instanceof Error ? e.message : e);
-    return { status: 502, ok: false, reason: "unavailable" };
-  }
-}
-
-export async function requestLoginCode(email: string, ip: string): Promise<{ ok: true } | { ok: false; reason: CodeFailure }> {
-  const r = await loginCall("login-code", { email, ip });
-  if (r.ok) return { ok: true };
-  const known: CodeFailure[] = ["invalid_email", "too_soon", "mail_failed"];
-  return { ok: false, reason: known.find((k) => k === r.reason) ?? "unavailable" };
-}
-
-export async function verifyLoginCode(email: string, code: string): Promise<{ ok: true } | { ok: false; reason: VerifyFailure }> {
-  const r = await loginCall("login-verify", { email, code });
-  if (r.ok) return { ok: true };
-  const known: VerifyFailure[] = ["invalid", "expired", "locked", "wrong"];
-  return { ok: false, reason: known.find((k) => k === r.reason) ?? "unavailable" };
+/**
+ * Expires both cookies with the SAME attributes they were set with. A "__Host-" cookie is only accepted (and only
+ * deleted) by browsers when the response carries Secure and Path=/, which a plain delete() omits.
+ */
+export function clearSessionCookies(jar: Awaited<ReturnType<typeof cookies>>): void {
+  jar.set(ACCESS_COOKIE, "", cookieBase(0));
+  jar.set(REFRESH_COOKIE, "", cookieBase(0));
 }

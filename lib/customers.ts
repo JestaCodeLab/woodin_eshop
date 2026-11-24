@@ -36,22 +36,40 @@ export class NotACustomerError extends Error {
 }
 
 /**
- * Finds the customer for this email, creating it on first sign-in. Staff accounts (anything other
- * than the "customer" role) are refused: an eshop sign-in must never get a session on, or write
- * profile data to, an admin or shop manager's WordPress user.
+ * The customer id for an email, or null when there is none. Staff accounts (anything other than the "customer"
+ * role) are refused: an eshop sign-in must never get a session on, or write profile data to, an admin or shop
+ * manager's WordPress user.
  */
-export async function findOrCreateCustomer(email: string): Promise<{ id: number; created: boolean }> {
+export async function findCustomer(email: string): Promise<number | null> {
   const found = await wc<WCCustomer[]>("GET", `/customers?email=${encodeURIComponent(email)}&role=all`);
   const existing = found.find((c) => c.email.toLowerCase() === email.toLowerCase());
-  if (existing) {
-    if (existing.role !== "customer") throw new NotACustomerError();
-    return { id: existing.id, created: false };
-  }
-  const created = await wc<WCCustomer>("POST", "/customers", { email, billing: { email } });
-  return { id: created.id, created: true };
+  if (!existing) return null;
+  if (existing.role !== "customer") throw new NotACustomerError();
+  return existing.id;
 }
 
-/** Cached per request: the account shell and each page can ask for the customer without refetching. */
+/** Creates the account for a confirmed email. Called only after the emailed code was verified. */
+export async function createCustomer(email: string, p: { name: string; phone: string }): Promise<number> {
+  const [first = "", ...rest] = p.name.trim().split(/\s+/);
+  const last = rest.join(" ");
+  try {
+    const created = await wc<WCCustomer>("POST", "/customers", {
+      email,
+      first_name: first,
+      last_name: last,
+      billing: { first_name: first, last_name: last, email, phone: p.phone, country: "GH" },
+      // The phone was typed, not confirmed: nothing is sent to it until it has been verified.
+      meta_data: [{ key: "woodin_phone_verified", value: "no" }],
+    });
+    return created.id;
+  } catch (e) {
+    // Two registrations for the same email at once: the second finds the first.
+    const again = await findCustomer(email).catch(() => null);
+    if (again) return again;
+    throw e;
+  }
+}
+
 export const getCustomer = cache((id: number) => wc<WCCustomer>("GET", `/customers/${id}`));
 
 /** "March 2026" from the customer's creation date, or null. */

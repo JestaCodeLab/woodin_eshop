@@ -11,7 +11,7 @@ import "server-only";
 
 import { wcCredentials } from "./payments-config";
 
-const LIVE_HOSTS = new Set(["woodinfashion.com", "www.woodinfashion.com"]);
+import { ordersBase as baseUrl } from "./wp-base";
 
 export class OrdersError extends Error {
   constructor(
@@ -23,18 +23,13 @@ export class OrdersError extends Error {
   }
 }
 
+/** Site root of the orders site. Throws an OrdersError when it is missing or unsafe. */
 export function ordersBase(): string {
-  const raw = process.env.WC_ORDERS_URL?.trim();
-  if (!raw) throw new OrdersError(500, "WC_ORDERS_URL is not set");
-  const url = new URL(raw);
-  const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-  if (url.protocol !== "https:" && !local) throw new OrdersError(500, "WC_ORDERS_URL must be https (API keys are sent as Basic auth)");
-  if (LIVE_HOSTS.has(url.hostname) && process.env.WC_ORDERS_ALLOW_LIVE !== "true") {
-    console.error(`[orders] Refusing to write orders to the live site (${url.hostname}). Point WC_ORDERS_URL at staging.`);
-    throw new OrdersError(500, "Orders site not available");
+  try {
+    return baseUrl();
+  } catch (e) {
+    throw new OrdersError(500, e instanceof Error ? e.message : "Orders site not available");
   }
-  // Only the site root matters: tolerate a pasted API path such as /wp-json/wc/v3/orders.
-  return url.origin;
 }
 
 export async function wc<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {

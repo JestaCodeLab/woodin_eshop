@@ -1,17 +1,17 @@
 "use client";
 
-import { Heart, House, MapPin, Package, UserRound, type LucideIcon } from "lucide-react";
+import { Heart, House, MapPin, Package, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export interface AccountNavItem {
   href: string;
   label: string;
-  icon: "overview" | "orders" | "favorites" | "addresses" | "details";
+  icon: "overview" | "orders" | "favorites" | "addresses" | "details" | "security";
   meta?: string;
 }
 
-const ICONS: Record<AccountNavItem["icon"], LucideIcon> = { overview: House, orders: Package, favorites: Heart, addresses: MapPin, details: UserRound };
+const ICONS: Record<AccountNavItem["icon"], LucideIcon> = { overview: House, orders: Package, favorites: Heart, addresses: MapPin, details: UserRound, security: ShieldCheck };
 
 /** Sections of the account area. A scrolling tab row on phones, a vertical menu from lg up. */
 export function AccountNav({ items }: { items: AccountNavItem[] }) {
