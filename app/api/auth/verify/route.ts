@@ -36,15 +36,17 @@ export async function POST(req: Request) {
 
   try {
     let customerId = await findCustomer(email);
+    let isNew = false;
     if (customerId === null) {
       // A sign-in never creates an account. (The code could not have been sent for an unknown email anyway.)
       if (mode !== "register") return json({ error: "expired", message: MESSAGES.expired }, 401);
       const d = registerDetails.safeParse({ name: parsed.data.name, phone: parsed.data.phone });
       if (!d.success) return json({ error: "invalid_request", message: d.error.issues[0]?.message ?? "Check your details and try again." }, 400);
       customerId = await createCustomer(email, d.data);
+      isNew = true;
     }
 
-    if (!(await startSession(req, customerId, email))) return json(FAILED, 502);
+    if (!(await startSession(req, customerId, email, { welcome: isNew }))) return json(FAILED, 502);
 
     // The bag is a nicety: never block sign-in on it.
     await getSavedCart(customerId)

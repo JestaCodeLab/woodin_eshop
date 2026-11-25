@@ -55,10 +55,10 @@ export async function getSession(): Promise<Session | null> {
   return { customerId: c.customerId, email: c.email, sid: c.sid };
 }
 
-/** Creates the session in WordPress and sets both cookies. Returns false when WordPress could not. */
-export async function startSession(req: Request, customerId: number, email: string): Promise<boolean> {
+/** Creates the session in WordPress and sets both cookies. `welcome` (a brand-new account) also sends the welcome email. Returns false when WordPress could not. */
+export async function startSession(req: Request, customerId: number, email: string, opts: { welcome?: boolean } = {}): Promise<boolean> {
   const device = describeDevice(req.headers.get("user-agent"));
-  const created = await createSession({ customerId, uaKey: device.key, uaLabel: device.label, ip: maskIp(clientIp(req)) });
+  const created = await createSession({ customerId, uaKey: device.key, uaLabel: device.label, ip: maskIp(clientIp(req)), welcome: opts.welcome });
   if (!created) return false;
   const jar = await cookies();
   jar.set(ACCESS_COOKIE, signAccess({ customerId, email, sid: created.sid }), cookieBase(ACCESS_TTL));

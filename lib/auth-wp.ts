@@ -79,8 +79,8 @@ export async function verifyPhoneCode(customerId: number, phone: string, code: s
 
 // --- Sessions ---------------------------------------------------------------
 
-export async function createSession(input: { customerId: number; uaKey: string; uaLabel: string; ip: string }): Promise<{ sid: string; refresh: string } | null> {
-  const r = await call("session-create", { customer_id: input.customerId, ua_coarse: input.uaKey, ua_label: input.uaLabel, ip: input.ip, notify: true });
+export async function createSession(input: { customerId: number; uaKey: string; uaLabel: string; ip: string; welcome?: boolean }): Promise<{ sid: string; refresh: string } | null> {
+  const r = await call("session-create", { customer_id: input.customerId, ua_coarse: input.uaKey, ua_label: input.uaLabel, ip: input.ip, notify: true, welcome: input.welcome === true });
   if (!r?.data?.ok || typeof r.data.sid !== "string" || typeof r.data.refresh !== "string") return null;
   return { sid: r.data.sid, refresh: r.data.refresh };
 }

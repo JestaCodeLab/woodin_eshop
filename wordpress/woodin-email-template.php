@@ -73,6 +73,17 @@ function woodin_email_facts(array $rows)
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 8px;border-bottom:1px solid ' . WOODIN_EMAIL_LINE . ';">' . $out . '</table>';
 }
 
+/** A short bulleted list of plain-text lines (welcome email). */
+function woodin_email_list(array $lines)
+{
+    $out = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0 4px;">';
+    foreach ($lines as $line) {
+        $out .= '<tr><td width="22" valign="top" style="padding:0 0 12px;font-family:' . WOODIN_EMAIL_SANS . ';font-size:15px;line-height:1.5;color:' . WOODIN_EMAIL_BROWN . ';">&bull;</td>'
+            . '<td style="padding:0 0 12px;font-family:' . WOODIN_EMAIL_SANS . ';font-size:15px;line-height:1.5;font-weight:300;color:' . WOODIN_EMAIL_BODY . ';">' . esc_html($line) . '</td></tr>';
+    }
+    return $out . '</table>';
+}
+
 /** "Item × qty" lines. $items = [ ['name' => ..., 'qty' => ...], ... ] */
 function woodin_email_items(array $items)
 {

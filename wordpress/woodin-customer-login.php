@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Woodin customer login
  * Description: Sign-in codes by email and rotating login sessions for the Woodin eshop. The eshop calls these private endpoints (all need the shared secret): /woodin/v1/login-code, login-verify, phone-code, phone-verify, session-create, session-refresh, session-check, session-list, session-revoke. Mail goes out through WordPress (wp_mail), so it uses whatever email setup the site already has.
- * Version: 2.1.0
+ * Version: 2.2.0
  *
  * INSTALL
  *   1. Upload this file to wp-content/mu-plugins/ (same folder as woodin-order-tracking.php). Nothing to activate.
@@ -387,6 +387,7 @@ add_action('rest_api_init', function () {
             $label  = woodin_sess_text($req->get_param('ua_label'), 80);
             $ip     = woodin_sess_text($req->get_param('ip'), 45);
             $notify = filter_var($req->get_param('notify'), FILTER_VALIDATE_BOOLEAN);
+            $welcome = filter_var($req->get_param('welcome'), FILTER_VALIDATE_BOOLEAN);
 
             if (!woodin_login_lock('sess_' . $cid)) {
                 return new WP_REST_Response(['ok' => false, 'reason' => 'busy'], 503);
@@ -432,6 +433,29 @@ add_action('rest_api_init', function () {
                     'body_html' => function_exists('woodin_email_facts') ? woodin_email_facts(['Device' => $label, 'When' => $when]) : '',
                     'button'    => ['label' => 'Review your devices', 'url' => $shop . '/account/security'],
                     'outro'     => 'If this was you, there is nothing to do. If it was not, open the page above and sign out of all devices.',
+                ], $plain);
+            }
+
+            // Welcome email: once, when the eshop says this sign-in just created the account.
+            if ($welcome && !get_user_meta($cid, 'woodin_welcome_sent', true)) {
+                update_user_meta($cid, 'woodin_welcome_sent', time());
+                $shop = function_exists('woodin_email_shop_url') ? woodin_email_shop_url() : home_url();
+                $first = trim((string) $user->first_name) ?: 'there';
+                $plain = "Welcome to Woodin, {$first}. Your account is ready.\n\n"
+                    . "With it you can follow every order with Ghana Post tracking, keep your favourites on any device and check out faster with saved details.\n\n"
+                    . "Start shopping: {$shop}/shop\n\nYou sign in with a code we email you, so there is no password to remember.\n";
+                woodin_login_mail($user->user_email, 'Welcome to Woodin', [
+                    'preheader' => 'Your Woodin account is ready.',
+                    'eyebrow'   => 'Welcome',
+                    'heading'   => "Welcome to Woodin, {$first}",
+                    'intro'     => 'Your account is ready. Here is what you can do with it:',
+                    'body_html' => function_exists('woodin_email_list') ? woodin_email_list([
+                        'Follow every order, with Ghana Post tracking',
+                        'Keep your favourites on any device',
+                        'Check out faster with your saved details',
+                    ]) : '',
+                    'button'    => ['label' => 'Start shopping', 'url' => $shop . '/shop'],
+                    'outro'     => 'You sign in with a code we email you, so there is no password to remember. Questions? Just reply to this email.',
                 ], $plain);
             }
             return new WP_REST_Response(['ok' => true, 'sid' => $sid, 'refresh' => $cid . '.' . $sid . '.' . $secret], 200);
