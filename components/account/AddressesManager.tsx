@@ -1,8 +1,9 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { EmptyState } from "@/components/account/EmptyState";
 import { Notice } from "@/components/account/Notice";
 import { Button } from "@/components/ui/Button";
 import type { Address } from "@/lib/customers";
@@ -60,7 +61,13 @@ export function AddressesManager({ addresses }: { addresses: Address[] }) {
     <div className="flex flex-col gap-6">
       {error && editing === null ? <Notice>{error}</Notice> : null}
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
+      {addresses.length === 0 && editing === null ? (
+        <EmptyState icon={MapPin} title="No addresses saved" action={{ label: "Add an address", onClick: () => open() }}>
+          Save an address and checkout fills it in for you, so ordering takes a few taps.
+        </EmptyState>
+      ) : null}
+
+      <div className={`grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5 ${addresses.length === 0 ? "hidden" : ""}`}>
         {addresses.map((a) => (
           <div key={a.id} className={`flex flex-col gap-2.5 border bg-white p-[26px] ${a.isDefault ? "border-brown" : "border-line"}`}>
             {a.isDefault ? <span className="self-start bg-brown px-[9px] py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ivory">Default</span> : null}

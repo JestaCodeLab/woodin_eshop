@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Package } from "lucide-react";
+import { EmptyState } from "@/components/account/EmptyState";
 import { OrderRow } from "@/components/account/OrderViews";
 import { requireSession } from "@/lib/account";
 import { toAccountOrder } from "@/lib/account-orders";
@@ -15,9 +16,9 @@ export default async function OrdersPage() {
       {orders === null ? (
         <p className="m-0 text-[15px] text-body">We could not load your orders right now. Please try again in a moment.</p>
       ) : orders.length === 0 ? (
-        <p className="m-0 text-[16px] font-light text-body">
-          No orders yet. <Link href="/shop" className="text-brown underline">Start with new arrivals</Link>
-        </p>
+        <EmptyState icon={Package} title="No orders yet" action={{ label: "Start shopping", href: "/shop" }}>
+          When you place an order it will show up here, with live tracking from payment to your door.
+        </EmptyState>
       ) : (
         <div className="flex flex-col gap-3.5">
           {orders.map((o) => (
