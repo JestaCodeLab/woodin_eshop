@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { formatMoney } from "@/lib/format";
 import type { AccountOrder } from "@/lib/account-orders";
@@ -31,7 +31,7 @@ function Thumbs({ urls, size }: { urls: string[]; size: "sm" | "md" }) {
   return (
     <div className="flex gap-2">
       {urls.map((src) => (
-        <Image key={src} src={src} alt="" width={64} height={80} sizes="64px" className={`${cls} object-cover`} />
+        <SafeImage key={src} src={src} alt="" width={64} height={80} sizes="64px" className={`${cls} object-cover`} />
       ))}
     </div>
   );

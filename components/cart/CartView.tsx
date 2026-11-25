@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -77,7 +77,7 @@ export function CartView({ threshold }: { threshold: number | null }) {
                     <li key={item.key} className="flex gap-4 border-b border-line py-6 md:gap-6">
                       <Link href={`/product/${item.slug}`} className="relative block h-[150px] w-[110px] shrink-0 overflow-hidden bg-sand md:h-[180px] md:w-[140px]">
                         {item.image ? (
-                          <Image src={item.image} alt={item.name} fill sizes="140px" className="object-cover object-top" />
+                          <SafeImage src={item.image} alt={item.name} fill sizes="140px" className="object-cover object-top" />
                         ) : null}
                       </Link>
                       <div className="flex min-w-0 flex-1 flex-col gap-1.5">

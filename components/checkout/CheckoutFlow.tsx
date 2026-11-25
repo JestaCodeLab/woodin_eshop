@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -562,7 +563,7 @@ export function CheckoutFlow({
             {cart?.items.map((i) => (
               <li key={i.key} className="flex items-center gap-3.5">
                 <span className="relative block h-20 w-16 shrink-0 bg-sand">
-                  {i.image ? <Image src={i.image} alt="" fill sizes="64px" className="object-cover object-top" /> : null}
+                  {i.image ? <SafeImage src={i.image} alt="" fill sizes="64px" className="object-cover object-top" /> : null}
                   <span className="absolute -right-2 -top-2 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-brown text-xs text-ivory">{i.quantity}</span>
                 </span>
                 <span className="flex flex-1 flex-col gap-0.5">

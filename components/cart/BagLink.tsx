@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -68,7 +68,7 @@ export function BagLink() {
                 {cart.items.map((item) => (
                   <li key={item.key} className="flex gap-3.5 border-b border-line px-5 py-4">
                     <Link href={`/product/${item.slug}`} onClick={close} className="relative block h-[72px] w-14 shrink-0 overflow-hidden bg-sand">
-                      {item.image ? <Image src={item.image} alt="" fill sizes="56px" className="object-cover object-top" /> : null}
+                      {item.image ? <SafeImage src={item.image} alt="" fill sizes="56px" className="object-cover object-top" /> : null}
                     </Link>
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <Link href={`/product/${item.slug}`} onClick={close} className="font-display text-[17px] leading-tight text-ink no-underline">

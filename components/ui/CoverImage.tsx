@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "./SafeImage";
 
 interface CoverImageProps {
   src: string;
@@ -26,7 +26,7 @@ export function CoverImage({
   className = "",
 }: CoverImageProps) {
   return (
-    <Image
+    <SafeImage
       src={src}
       alt={alt}
       fill

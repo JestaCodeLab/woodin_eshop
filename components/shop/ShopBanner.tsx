@@ -2,7 +2,7 @@
 
 import { getImageProps } from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { ShopBanner as Banner } from "@/lib/banners";
 
@@ -124,8 +124,26 @@ export function ShopBanner({ banners }: { banners: Banner[] }) {
   );
 }
 
-/** Desktop photo from 768px up, phone photo below (art direction), both optimised by next/image. */
+/**
+ * Desktop photo from 768px up, phone photo below (art direction), both optimised by next/image.
+ * Self-healing like <SafeImage>: if the optimised copy fails, the browser fetches the photo straight from WordPress,
+ * tries once more, and finally shows nothing (the banner's background colour) instead of a broken-image icon.
+ */
 function BannerPicture({ banner, priority }: { banner: Banner; priority: boolean }) {
+  const [stage, setStage] = useState<0 | 1 | 2 | 3>(0);
+  const direct = useRef<HTMLImageElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const failed = () =>
+    setStage((s) => {
+      if (s === 0) return 1;
+      if (s === 1) {
+        timer.current = setTimeout(() => setStage(2), 1500);
+        return 1;
+      }
+      return s === 2 ? 3 : s;
+    });
+  useEffect(() => () => clearTimeout(timer.current), []);
+
   const common = { alt: banner.image.alt, fill: true as const, priority, className: "object-cover object-[70%_center]" };
   const {
     props: { srcSet: desktopSet, ...desktop },
@@ -134,11 +152,35 @@ function BannerPicture({ banner, priority }: { banner: Banner; priority: boolean
     ? getImageProps({ ...common, src: banner.mobileImage.url, sizes: "100vw", quality: 75 }).props.srcSet
     : undefined;
 
+  if (stage === 3) return null;
+  if (stage >= 1) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        key={stage}
+        ref={direct}
+        src={stage === 2 ? `${banner.image.url}?r=1` : banner.image.url}
+        alt={banner.image.alt}
+        className="object-cover object-[70%_center]"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        onError={failed}
+      />
+    );
+  }
+
   return (
     <picture>
       {mobile && <source media="(max-width: 767px)" srcSet={mobile} sizes="100vw" />}
       <source media="(min-width: 768px)" srcSet={desktopSet} sizes={desktop.sizes} />
-      <img {...desktop} alt={banner.image.alt} />
+      <img
+        {...desktop}
+        alt={banner.image.alt}
+        onError={failed}
+        // An image that failed before React attached (server-rendered HTML) never fires onError: check on mount.
+        ref={(el) => {
+          if (el && el.complete && el.naturalWidth === 0) failed();
+        }}
+      />
     </picture>
   );
 }
